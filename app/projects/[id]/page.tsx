@@ -8,6 +8,7 @@ import type { Project } from "@/lib/types";
 import { OverviewTab } from "./overview-tab";
 import { BoqTab } from "./boq-tab";
 import { BudgetTab } from "./budget-tab";
+import { ProcurementTab } from "./procurement-tab";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ const TABS: { key: string; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "boq", label: "BOQ" },
   { key: "budget", label: "Budget" },
+  { key: "procurement", label: "Procurement" },
 ];
 
 export default async function ProjectDetailPage({
@@ -95,6 +97,7 @@ export default async function ProjectDetailPage({
       {tab === "overview" && <OverviewTab project={project} fin={fin} completion={completion} />}
       {tab === "boq" && <BoqTab projectId={id} />}
       {tab === "budget" && <BudgetTab projectId={id} fin={fin} />}
+      {tab === "procurement" && <ProcurementTab projectId={id} />}
     </>
   );
 }
