@@ -1,6 +1,20 @@
-# vibe-stack-supabase
+# HSH ProjectOS
 
-Next.js 15 + Supabase starter for shipping vibe-coded apps fast. Clone, provision, build.
+Integrated construction project and financial management platform — replaces Excel and WhatsApp by tracking the full project lifecycle from quotation to profitability for residential construction teams.
+
+## What it does
+
+- **Projects & Clients** — project master with client, contract value, status, dates, completion %
+- **BOQ & Budgets** — bill-of-quantities line items with computed totals; budget categories with variance
+- **Procurement engine** — purchase request → approval → purchase order → approval → material delivery, with an append-only approval audit trail
+- **Site progress** — daily logs (work done, completion %, workers, weather, issues); latest completion flows to the project master and dashboard
+- **Variation orders** — approval workflow; approved VOs update the revised contract value
+- **Progress claims** — pre-filled from completion % × revised contract minus claimed-to-date; certification with approved amount; customer receipts auto-mark claims paid
+- **Payments** — customer receipts and supplier payments; POs auto-mark paid when settled
+- **Director dashboard** — cash position, receivables/payables, pending-approvals queue (oldest first, inline approve/reject), project health ranking, upcoming milestones
+- **Inspections & documents** — inspection records and file uploads to Supabase Storage per project
+
+v1 runs in demo mode (no login wall, open RLS policies). The lock-down sprint — Supabase Auth, owner RLS policies, role-based navigation — is planned next; see `docs/TASKS.md` Sprint 5.
 
 ## Stack
 
@@ -8,34 +22,20 @@ Next.js 15 + Supabase starter for shipping vibe-coded apps fast. Clone, provisio
 |---|---|
 | Framework | Next.js 15 (App Router, React 19, Server Actions) |
 | Language | TypeScript strict |
-| Styles | Tailwind CSS v4 (CSS-first, no config file) |
-| Auth + DB | Supabase (`@supabase/ssr`) |
-| Package manager | Bun |
-| Deploy | Vercel |
+| Styles | Tailwind CSS v4 |
+| DB | Supabase Postgres (schema in `supabase/migrations/0001_init.sql`) |
+| Deploy | Vercel (auto-deploys from `main`) |
 
 ## Quick start
 
 ```bash
-bun install
-cp .env.example .env.local   # fill in your Supabase keys
-bun dev
+npm install
+vercel link && vercel env pull .env.local   # Supabase keys live in Vercel env
+npm run dev
 ```
 
-Open http://localhost:3000. Edit `app/page.tsx` to start building.
+Apply `supabase/migrations/0001_init.sql` in the Supabase SQL editor if the database is fresh.
 
-## Provisioning a new project
+## Docs
 
-Use the `/new-vibe-project <name>` skill (see `claude-dotfiles` repo) which:
-1. Clones this template and renames it
-2. Creates a new GitHub repo and pushes
-3. Creates a Supabase project and injects URL + anon key
-4. Creates a Vercel project linked to the GitHub repo
-5. Triggers first deploy and returns the preview URL
-
-## Working with AI
-
-See [CLAUDE.md](CLAUDE.md) for conventions. This repo is pre-wired for gstack — start with `/office-hours`.
-
-## Switching to Neon
-
-If you need Postgres without Supabase (e.g. prefer Drizzle ORM + Clerk for auth), a `vibe-stack-neon` variant is planned. For now: fork this and swap `@supabase/ssr` for `drizzle-orm` + `@neondatabase/serverless`, add Clerk or NextAuth.
+The full plan lives in `/docs`: [PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) · [Tasks](docs/TASKS.md) · [Test plan](docs/TEST_PLAN.md) · [Security](docs/SECURITY.md)
