@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { canAccessModule, ROLE_LABELS, type Role } from "@/lib/roles";
+import { signOut } from "@/lib/actions/auth";
 
 const NAV_ITEMS: { href: string; label: string; icon: string }[] = [
   { href: "/", label: "Dashboard", icon: "M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" },
@@ -16,8 +18,19 @@ const NAV_ITEMS: { href: string; label: string; icon: string }[] = [
   { href: "/payments", label: "Payments", icon: "M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  role,
+  fullName,
+  email,
+}: {
+  role: Role;
+  fullName: string;
+  email: string;
+}) {
   const pathname = usePathname();
+  const items = NAV_ITEMS.filter((item) =>
+    canAccessModule(role, item.href === "/" ? "" : item.href.slice(1)),
+  );
   return (
     <aside className="fixed inset-y-0 left-0 w-60 bg-slate-900 text-slate-300 flex flex-col z-10">
       <div className="px-5 py-5 border-b border-slate-800">
@@ -29,7 +42,7 @@ export function Sidebar() {
         </Link>
       </div>
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active =
             item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
@@ -50,8 +63,17 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-5 py-4 border-t border-slate-800 text-[11px] text-slate-500">
-        Demo mode — open access (v1)
+      <div className="px-4 py-4 border-t border-slate-800">
+        <p className="text-sm font-medium text-slate-200 truncate">{fullName}</p>
+        <p className="text-[11px] text-slate-500 truncate">
+          {ROLE_LABELS[role]} · {email}
+        </p>
+        <button
+          onClick={() => signOut()}
+          className="mt-2.5 w-full rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+        >
+          Sign out
+        </button>
       </div>
     </aside>
   );

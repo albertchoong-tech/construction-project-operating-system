@@ -3,11 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireDirector } from "@/lib/auth";
 import { nextDocNo, today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
 import type { PRItem } from "@/lib/types";
-
-const DEMO_APPROVER = "Director (demo)";
 
 function revalidateProcurement(projectId?: string | null) {
   revalidatePath("/purchase-requests");
@@ -21,13 +20,14 @@ async function writeApproval(
   entityId: string,
   action: "approved" | "rejected",
   remarks: string,
+  approver: string,
 ) {
   const supabase = await createClient();
   await supabase.from("approval_records").insert({
     entity_type: entityType,
     entity_id: entityId,
     action,
-    actioned_by: DEMO_APPROVER,
+    actioned_by: approver,
     remarks: remarks.trim() || null,
   });
 }
@@ -90,6 +90,8 @@ export async function actionPR(
   action: "approved" | "rejected",
   remarks: string,
 ): Promise<{ error?: string } | void> {
+  const auth = await requireDirector();
+  if ("error" in auth) return auth;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("purchase_requests")
@@ -99,7 +101,7 @@ export async function actionPR(
     .select("project_id")
     .single();
   if (error) return { error: error.message };
-  await writeApproval("purchase_request", id, action, remarks);
+  await writeApproval("purchase_request", id, action, remarks, auth.approver);
   revalidateProcurement(data?.project_id);
 }
 
@@ -176,6 +178,8 @@ export async function actionPO(
   action: "approved" | "rejected",
   remarks: string,
 ): Promise<{ error?: string } | void> {
+  const auth = await requireDirector();
+  if ("error" in auth) return auth;
   const supabase = await createClient();
   if (action === "approved") {
     const { data, error } = await supabase
@@ -186,11 +190,11 @@ export async function actionPO(
       .select("project_id")
       .single();
     if (error) return { error: error.message };
-    await writeApproval("purchase_order", id, "approved", remarks);
+    await writeApproval("purchase_order", id, "approved", remarks, auth.approver);
     revalidateProcurement(data?.project_id);
   } else {
     // Rejected POs revert to draft so they can be amended; record the rejection
-    await writeApproval("purchase_order", id, "rejected", remarks);
+    await writeApproval("purchase_order", id, "rejected", remarks, auth.approver);
     const { data } = await supabase.from("purchase_orders").select("project_id").eq("id", id).single();
     revalidateProcurement(data?.project_id);
   }

@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireDirector } from "@/lib/auth";
 import { nextDocNo, today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
-
-const DEMO_APPROVER = "Director (demo)";
 
 function revalidateFinancials(projectId?: string | null) {
   if (projectId) revalidatePath(`/projects/${projectId}`);
@@ -20,13 +19,14 @@ async function writeApproval(
   entityId: string,
   action: "approved" | "rejected",
   remarks: string,
+  approver: string,
 ) {
   const supabase = await createClient();
   await supabase.from("approval_records").insert({
     entity_type: entityType,
     entity_id: entityId,
     action,
-    actioned_by: DEMO_APPROVER,
+    actioned_by: approver,
     remarks: remarks.trim() || null,
   });
 }
@@ -72,12 +72,14 @@ export async function actionVO(
   action: "approved" | "rejected",
   remarks: string,
 ): Promise<{ error?: string } | void> {
+  const auth = await requireDirector();
+  if ("error" in auth) return auth;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("variation_orders")
     .update({
       status: action,
-      approved_by: action === "approved" ? DEMO_APPROVER : null,
+      approved_by: action === "approved" ? auth.approver : null,
       approved_date: action === "approved" ? today() : null,
     })
     .eq("id", id)
@@ -85,7 +87,7 @@ export async function actionVO(
     .select("project_id")
     .single();
   if (error) return { error: error.message };
-  await writeApproval("variation_order", id, action, remarks);
+  await writeApproval("variation_order", id, action, remarks, auth.approver);
   revalidateFinancials(data?.project_id);
 }
 
@@ -143,6 +145,8 @@ export async function approveClaim(
   approvedAmount: number | null,
   remarks: string,
 ): Promise<{ error?: string } | void> {
+  const auth = await requireDirector();
+  if ("error" in auth) return auth;
   const supabase = await createClient();
   const { data: claim } = await supabase
     .from("progress_claims")
@@ -163,7 +167,7 @@ export async function approveClaim(
     .update({ status: "approved", approved_amount })
     .eq("id", id);
   if (error) return { error: error.message };
-  await writeApproval("progress_claim", id, "approved", remarks);
+  await writeApproval("progress_claim", id, "approved", remarks, auth.approver);
   revalidateFinancials(claim.project_id);
 }
 
@@ -171,6 +175,8 @@ export async function rejectClaim(
   id: string,
   remarks: string,
 ): Promise<{ error?: string } | void> {
+  const auth = await requireDirector();
+  if ("error" in auth) return auth;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("progress_claims")
@@ -180,7 +186,7 @@ export async function rejectClaim(
     .select("project_id")
     .single();
   if (error) return { error: error.message };
-  await writeApproval("progress_claim", id, "rejected", remarks);
+  await writeApproval("progress_claim", id, "rejected", remarks, auth.approver);
   revalidateFinancials(data?.project_id);
 }
 

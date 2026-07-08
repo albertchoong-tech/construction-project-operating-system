@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { canAccessModule, homeFor, isValidRole, type Role } from "@/lib/roles";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -10,9 +11,6 @@ export async function updateSession(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // If Supabase isn't configured, skip the auth refresh and pass through.
-  // Without this guard createServerClient throws "Your project's URL and Key
-  // are required", crashing the edge middleware on every route (500
-  // MIDDLEWARE_INVOCATION_FAILED).
   if (!url || !anonKey) {
     return supabaseResponse;
   }
@@ -36,8 +34,32 @@ export async function updateSession(request: NextRequest) {
       },
     });
 
-    // Refresh session so it doesn't expire while user is active
-    await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const path = request.nextUrl.pathname;
+    const isLoginPage = path === "/login" || path.startsWith("/auth");
+
+    // Carry refreshed session cookies onto any redirect we issue
+    const redirectTo = (target: string) => {
+      const redirect = NextResponse.redirect(new URL(target, request.url));
+      response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+      return redirect;
+    };
+
+    if (!user) {
+      return isLoginPage ? response : redirectTo("/login");
+    }
+
+    const metaRole = user.user_metadata?.role;
+    const role: Role = isValidRole(metaRole) ? metaRole : "project_manager";
+
+    if (isLoginPage) return redirectTo(homeFor(role));
+
+    const segment = path.split("/")[1] ?? "";
+    if (!canAccessModule(role, segment)) return redirectTo(homeFor(role));
+
     return response;
   } catch {
     // Never let an auth hiccup crash the entire edge middleware
