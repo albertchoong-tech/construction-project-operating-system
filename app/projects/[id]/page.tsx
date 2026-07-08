@@ -13,6 +13,8 @@ import { ProgressTab } from "./progress-tab";
 import { VosTab } from "./vos-tab";
 import { ClaimsTab } from "./claims-tab";
 import { PaymentsTab } from "./payments-tab";
+import { InspectionsTab } from "./inspections-tab";
+import { DocumentsTab } from "./documents-tab";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,8 @@ const TABS: { key: string; label: string }[] = [
   { key: "vos", label: "Variation Orders" },
   { key: "claims", label: "Claims" },
   { key: "payments", label: "Payments" },
+  { key: "inspections", label: "Inspections" },
+  { key: "documents", label: "Documents" },
 ];
 
 export default async function ProjectDetailPage({
@@ -110,6 +114,8 @@ export default async function ProjectDetailPage({
       {tab === "vos" && <VosTab projectId={id} />}
       {tab === "claims" && <ClaimsTab project={project} fin={fin} completion={completion} />}
       {tab === "payments" && <PaymentsTab projectId={id} />}
+      {tab === "inspections" && <InspectionsTab projectId={id} />}
+      {tab === "documents" && <DocumentsTab projectId={id} />}
     </>
   );
 }
