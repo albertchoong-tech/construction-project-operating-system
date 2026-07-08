@@ -355,27 +355,48 @@ insert into purchase_requests (id, project_id, pr_no, requested_by, request_date
 on conflict (id) do nothing;
 
 insert into purchase_orders (id, project_id, pr_id, supplier_id, po_no, issue_date, delivery_date, status, total_amount) values
-  ('g1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'f1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'PO-2024-001', '2024-02-12', '2024-02-18', 'delivered', 6600)
+  ('f2000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'f1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'PO-2024-001', '2024-02-12', '2024-02-18', 'delivered', 6600)
 on conflict (id) do nothing;
 
 insert into site_progress_logs (id, project_id, log_date, reported_by, work_done, completion_pct, weather, workers_count) values
-  ('h1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', '2024-04-01', 'Hafiz Roslan', 'Completed slab casting for living area. Curing in progress.', 42, 'Sunny', 14),
-  ('h1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', '2024-04-01', 'Azlan Mohd', 'First fix electrical conduit completed for floors 1–3.', 18, 'Cloudy', 8)
+  ('f3000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', '2024-04-01', 'Hafiz Roslan', 'Completed slab casting for living area. Curing in progress.', 42, 'Sunny', 14),
+  ('f3000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', '2024-04-01', 'Azlan Mohd', 'First fix electrical conduit completed for floors 1–3.', 18, 'Cloudy', 8)
 on conflict (id) do nothing;
 
 insert into variation_orders (id, project_id, vo_no, description, requested_by, request_date, amount, status, approved_by, approved_date) values
-  ('i1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'VO-001', 'Additional waterproofing to wet areas — client request', 'Mr Tan Wei Liang', '2024-03-05', 8500, 'approved', 'Director', '2024-03-07')
+  ('f4000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'VO-001', 'Additional waterproofing to wet areas — client request', 'Mr Tan Wei Liang', '2024-03-05', 8500, 'approved', 'Director', '2024-03-07')
 on conflict (id) do nothing;
 
 insert into progress_claims (id, project_id, claim_no, claim_date, period_end, claimed_amount, approved_amount, status) values
-  ('j1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'PC-001', '2024-03-31', '2024-03-31', 120000, 120000, 'approved'),
-  ('j1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000001', 'PC-002', '2024-04-30', '2024-04-30', 85000, 0, 'submitted')
+  ('f5000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'PC-001', '2024-03-31', '2024-03-31', 120000, 120000, 'approved'),
+  ('f5000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000001', 'PC-002', '2024-04-30', '2024-04-30', 85000, 0, 'submitted')
 on conflict (id) do nothing;
 
 insert into customer_payments (id, project_id, claim_id, payment_date, amount, payment_method, reference_no) values
-  ('k1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'j1000000-0000-0000-0000-000000000001', '2024-04-08', 120000, 'Bank Transfer', 'TT-20240408-001')
+  ('f6000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'f5000000-0000-0000-0000-000000000001', '2024-04-08', 120000, 'Bank Transfer', 'TT-20240408-001')
 on conflict (id) do nothing;
 
 insert into supplier_payments (id, project_id, po_id, payment_date, amount, payment_method, reference_no) values
-  ('l1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'g1000000-0000-0000-0000-000000000001', '2024-02-25', 6600, 'Bank Transfer', 'TT-20240225-002')
+  ('f7000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'f2000000-0000-0000-0000-000000000001', '2024-02-25', 6600, 'Bank Transfer', 'TT-20240225-002')
 on conflict (id) do nothing;
+-- Foreign keys (DATA_MODEL.md relationships) — required for PostgREST embedding
+alter table projects add constraint projects_client_id_fkey foreign key (client_id) references clients(id) on delete set null;
+alter table quotations add constraint quotations_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table boq_items add constraint boq_items_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table budgets add constraint budgets_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table purchase_requests add constraint purchase_requests_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table purchase_orders add constraint purchase_orders_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table purchase_orders add constraint purchase_orders_pr_id_fkey foreign key (pr_id) references purchase_requests(id) on delete set null;
+alter table purchase_orders add constraint purchase_orders_supplier_id_fkey foreign key (supplier_id) references suppliers(id) on delete set null;
+alter table po_items add constraint po_items_po_id_fkey foreign key (po_id) references purchase_orders(id) on delete cascade;
+alter table material_deliveries add constraint material_deliveries_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table material_deliveries add constraint material_deliveries_po_id_fkey foreign key (po_id) references purchase_orders(id) on delete set null;
+alter table site_progress_logs add constraint site_progress_logs_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table inspection_records add constraint inspection_records_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table variation_orders add constraint variation_orders_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table progress_claims add constraint progress_claims_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table customer_payments add constraint customer_payments_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table customer_payments add constraint customer_payments_claim_id_fkey foreign key (claim_id) references progress_claims(id) on delete set null;
+alter table supplier_payments add constraint supplier_payments_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
+alter table supplier_payments add constraint supplier_payments_po_id_fkey foreign key (po_id) references purchase_orders(id) on delete set null;
+alter table project_documents add constraint project_documents_project_id_fkey foreign key (project_id) references projects(id) on delete cascade;
