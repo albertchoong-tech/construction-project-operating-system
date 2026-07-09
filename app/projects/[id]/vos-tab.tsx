@@ -2,17 +2,26 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
+import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
 import { createVO, actionVO, deleteVO } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, today } from "@/lib/format";
-import type { VariationOrder } from "@/lib/types";
+import type { ProjectDocument, VariationOrder } from "@/lib/types";
 
 export async function VosTab({ projectId }: { projectId: string }) {
   const supabase = await createClient();
-  const { data: vos, error } = await supabase
-    .from("variation_orders")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+  const [{ data: vos, error }, { data: voDocs }] = await Promise.all([
+    supabase
+      .from("variation_orders")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("project_documents")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("entity_type", "variation_order"),
+  ]);
+  const docsByVO = groupByEntity((voDocs ?? []) as ProjectDocument[]);
 
   if (error) {
     return (
@@ -47,7 +56,10 @@ export async function VosTab({ projectId }: { projectId: string }) {
             {(vos as VariationOrder[]).map((vo) => (
               <tr key={vo.id} className="hover:bg-slate-50 align-top">
                 <Td className="font-medium">{vo.vo_no}</Td>
-                <Td className="whitespace-normal max-w-md">{vo.description}</Td>
+                <Td className="whitespace-normal max-w-md">
+                  {vo.description}
+                  <AttachmentChips docs={docsByVO.get(vo.id) ?? []} projectId={projectId} />
+                </Td>
                 <Td>{vo.requested_by ?? "—"}</Td>
                 <Td>{fmtDate(vo.request_date)}</Td>
                 <Td right>{fmtRM(vo.amount)}</Td>
@@ -113,6 +125,7 @@ export async function VosTab({ projectId }: { projectId: string }) {
             <Field label="Request date">
               <TextInput name="request_date" type="date" defaultValue={today()} />
             </Field>
+            <FileField label="Supporting documents / photos" className="sm:col-span-3" />
           </div>
         </ActionForm>
       </Card>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, Table, Td, EmptyState } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
+import { FileField } from "@/components/attachments";
 import { addProgressLog } from "@/lib/actions/site";
 import { fmtDate, fmtPct, today } from "@/lib/format";
 import type { SiteProgressLog } from "@/lib/types";
@@ -76,6 +77,7 @@ export default async function SiteProgressPage() {
               <Field label="Issues">
                 <TextInput name="issues" placeholder="Delays, shortages…" />
               </Field>
+              <FileField label="Site photos" className="col-span-2 sm:col-span-4" />
             </div>
           </ActionForm>
         </Card>

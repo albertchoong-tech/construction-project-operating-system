@@ -2,17 +2,26 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
+import { IssueCategoryField } from "@/components/issue-category-field";
+import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
 import { addInspection, deleteInspection } from "@/lib/actions/site";
 import { fmtDate, today } from "@/lib/format";
-import type { InspectionRecord } from "@/lib/types";
+import type { InspectionRecord, ProjectDocument } from "@/lib/types";
 
 export async function InspectionsTab({ projectId }: { projectId: string }) {
   const supabase = await createClient();
-  const { data: inspections, error } = await supabase
-    .from("inspection_records")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("inspection_date", { ascending: false });
+  const [{ data: inspections, error }, { data: docs }] = await Promise.all([
+    supabase
+      .from("inspection_records")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("inspection_date", { ascending: false }),
+    supabase
+      .from("project_documents")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("entity_type", "inspection_record"),
+  ]);
 
   if (error) {
     return (
@@ -22,13 +31,15 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
     );
   }
 
+  const docsByInspection = groupByEntity((docs ?? []) as ProjectDocument[]);
+
   return (
     <div className="space-y-6">
       <Card title="Inspection Records">
         {!inspections?.length ? (
           <EmptyState message="No inspections recorded for this project yet." />
         ) : (
-          <Table headers={["Date", "Inspector", "Area", "Result", "Remarks", ""]}>
+          <Table headers={["Date", "Inspector", "Area", "Result", "Issue Category", "Remarks / Photos", ""]}>
             {(inspections as InspectionRecord[]).map((i) => (
               <tr key={i.id} className="hover:bg-slate-50 align-top">
                 <Td>{fmtDate(i.inspection_date)}</Td>
@@ -37,7 +48,24 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
                 <Td>
                   <StatusBadge status={i.result} />
                 </Td>
-                <Td className="whitespace-normal max-w-md">{i.remarks ?? "—"}</Td>
+                <Td className="whitespace-normal max-w-48">
+                  {i.issue_category ? (
+                    <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200 px-2.5 py-0.5 text-xs font-medium">
+                      {i.issue_category === "Others" && i.issue_detail
+                        ? `Others — ${i.issue_detail}`
+                        : i.issue_category}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </Td>
+                <Td className="whitespace-normal max-w-md">
+                  {i.remarks ?? "—"}
+                  <AttachmentChips
+                    docs={docsByInspection.get(i.id) ?? []}
+                    projectId={projectId}
+                  />
+                </Td>
                 <Td right>
                   <ActionButton
                     label="Delete"
@@ -72,9 +100,13 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
                 <option value="fail">Fail</option>
               </Select>
             </Field>
+            <div className="col-span-2 sm:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <IssueCategoryField />
+            </div>
             <Field label="Remarks" className="col-span-2 sm:col-span-4">
               <TextArea name="remarks" placeholder="Findings, follow-up actions…" />
             </Field>
+            <FileField label="Photos / documents" className="col-span-2 sm:col-span-4" />
           </div>
         </ActionForm>
       </Card>

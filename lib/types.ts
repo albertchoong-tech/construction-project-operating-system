@@ -84,6 +84,7 @@ export type PurchaseOrder = {
   issue_date: string | null;
   delivery_date: string | null;
   status: "draft" | "approved" | "delivered" | "invoiced" | "paid";
+  cost_category: string | null;
   total_amount: number;
   notes: string | null;
   created_at: string;
@@ -125,8 +126,30 @@ export type InspectionRecord = {
   inspector: string | null;
   area: string | null;
   result: "pass" | "fail" | "conditional" | null;
+  issue_category: string | null;
+  issue_detail: string | null;
   remarks: string | null;
   created_at: string;
+};
+
+export type LabourCost = {
+  id: string;
+  project_id: string;
+  worker_name: string;
+  work_date: string | null;
+  period: string | null;
+  basic_wages: number;
+  overtime: number;
+  allowance: number;
+  epf: number;
+  socso: number;
+  eis: number;
+  pcb: number;
+  other_cost: number;
+  remarks: string | null;
+  total_cost: number;
+  created_at: string;
+  projects?: Project | null;
 };
 
 export type VariationOrder = {
@@ -202,5 +225,7 @@ export type ProjectDocument = {
   file_name: string | null;
   file_url: string | null;
   uploaded_by: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
   created_at: string;
 };

@@ -1,4 +1,5 @@
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
+import { FileField } from "@/components/attachments";
 import { saveProject } from "@/lib/actions/projects";
 import type { Client, Project } from "@/lib/types";
 
@@ -64,6 +65,7 @@ export function ProjectForm({
         <Field label="Site address" className="sm:col-span-2">
           <TextArea name="address" defaultValue={project?.address ?? ""} placeholder="Street, city, state" />
         </Field>
+        <FileField label="Attachments (site photos, contract, drawings…)" className="sm:col-span-2" />
       </div>
     </ActionForm>
   );

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
+import { FileField } from "@/components/attachments";
 import { createVO, actionVO, deleteVO } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, today } from "@/lib/format";
 import type { VariationOrder } from "@/lib/types";
@@ -125,6 +126,7 @@ export default async function VariationOrdersPage() {
               <Field label="Description" required className="sm:col-span-4">
                 <TextArea name="description" required placeholder="e.g. Additional waterproofing works to wet areas" />
               </Field>
+              <FileField label="Supporting documents / photos" className="sm:col-span-4" />
             </div>
           </ActionForm>
         </Card>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireDirector } from "@/lib/auth";
+import { uploadAttachments } from "@/lib/attachments";
 import { nextDocNo, today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
 
@@ -52,16 +53,29 @@ export async function createVO(
     .eq("project_id", project_id);
   const vo_no = nextDocNo("VO", (existing ?? []).map((r) => r.vo_no));
 
-  const { error } = await supabase.from("variation_orders").insert({
-    project_id,
-    vo_no,
-    description,
-    requested_by: ((formData.get("requested_by") as string) || "").trim() || null,
-    request_date: (formData.get("request_date") as string) || today(),
-    amount,
-    status: "pending",
-  });
+  const { data, error } = await supabase
+    .from("variation_orders")
+    .insert({
+      project_id,
+      vo_no,
+      description,
+      requested_by: ((formData.get("requested_by") as string) || "").trim() || null,
+      request_date: (formData.get("request_date") as string) || today(),
+      amount,
+      status: "pending",
+    })
+    .select("id")
+    .single();
   if (error) return { error: `Could not create VO: ${error.message}` };
+
+  const uploadError = await uploadAttachments(
+    formData,
+    project_id,
+    "variation_order",
+    data.id,
+    "Variation Order",
+  );
+  if (uploadError) return { error: uploadError };
 
   revalidateFinancials(project_id);
   return { ok: true };

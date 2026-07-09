@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { uploadAttachments } from "@/lib/attachments";
 import { nextDocNo } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
 
@@ -57,6 +58,9 @@ export async function saveProject(
     if (error) return { error: `Could not save project: ${error.message}` };
     projectId = data.id;
   }
+
+  const uploadError = await uploadAttachments(formData, projectId!, null, null, "Other");
+  if (uploadError) return { error: uploadError };
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);

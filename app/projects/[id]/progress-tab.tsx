@@ -2,17 +2,26 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, Table, Td, EmptyState } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
+import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
 import { addProgressLog, deleteProgressLog } from "@/lib/actions/site";
 import { fmtDate, fmtPct, today } from "@/lib/format";
-import type { SiteProgressLog } from "@/lib/types";
+import type { ProjectDocument, SiteProgressLog } from "@/lib/types";
 
 export async function ProgressTab({ projectId }: { projectId: string }) {
   const supabase = await createClient();
-  const { data: logs, error } = await supabase
-    .from("site_progress_logs")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("log_date", { ascending: false });
+  const [{ data: logs, error }, { data: logDocs }] = await Promise.all([
+    supabase
+      .from("site_progress_logs")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("log_date", { ascending: false }),
+    supabase
+      .from("project_documents")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("entity_type", "site_progress_log"),
+  ]);
+  const docsByLog = groupByEntity((logDocs ?? []) as ProjectDocument[]);
 
   if (error) {
     return (
@@ -49,6 +58,7 @@ export async function ProgressTab({ projectId }: { projectId: string }) {
             <Field label="Issues" className="col-span-1 sm:col-span-3">
               <TextInput name="issues" placeholder="Delays, shortages…" />
             </Field>
+            <FileField label="Site photos" className="col-span-2 sm:col-span-4" />
           </div>
         </ActionForm>
       </Card>
@@ -65,7 +75,10 @@ export async function ProgressTab({ projectId }: { projectId: string }) {
               <tr key={log.id} className="hover:bg-slate-50 align-top">
                 <Td>{fmtDate(log.log_date)}</Td>
                 <Td>{log.reported_by ?? "—"}</Td>
-                <Td className="whitespace-normal max-w-md">{log.work_done ?? "—"}</Td>
+                <Td className="whitespace-normal max-w-md">
+                  {log.work_done ?? "—"}
+                  <AttachmentChips docs={docsByLog.get(log.id) ?? []} projectId={projectId} />
+                </Td>
                 <Td right>{fmtPct(log.completion_pct)}</Td>
                 <Td right>{log.workers_count}</Td>
                 <Td>{log.weather ?? "—"}</Td>

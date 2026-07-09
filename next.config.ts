@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   // so we don't let them block a deployment.
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  // Attachment uploads go through server actions as multipart form data
+  experimental: { serverActions: { bodySizeLimit: "25mb" } },
 };
 
 export default nextConfig;

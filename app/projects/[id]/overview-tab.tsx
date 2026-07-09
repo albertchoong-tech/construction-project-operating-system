@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Table, Td, StatusBadge, EmptyState } from "@/components/ui";
+import { AttachmentChips } from "@/components/attachments";
 import { fmtRM, fmtDate, fmtPct } from "@/lib/format";
 import type { ProjectFinancials } from "@/lib/financials";
-import type { Project, SiteProgressLog } from "@/lib/types";
+import type { Project, ProjectDocument, SiteProgressLog } from "@/lib/types";
 
 export async function OverviewTab({
   project,
@@ -14,12 +16,20 @@ export async function OverviewTab({
   completion: number;
 }) {
   const supabase = await createClient();
-  const { data: recentLogs } = await supabase
-    .from("site_progress_logs")
-    .select("*")
-    .eq("project_id", project.id)
-    .order("log_date", { ascending: false })
-    .limit(5);
+  const [{ data: recentLogs }, { data: recentDocs }] = await Promise.all([
+    supabase
+      .from("site_progress_logs")
+      .select("*")
+      .eq("project_id", project.id)
+      .order("log_date", { ascending: false })
+      .limit(5),
+    supabase
+      .from("project_documents")
+      .select("*")
+      .eq("project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(6),
+  ]);
 
   const budgetUsedPct =
     fin.budgetTotal > 0 ? Math.min(100, (fin.committedCost / fin.budgetTotal) * 100) : 0;
@@ -60,11 +70,15 @@ export async function OverviewTab({
               <span className="font-medium tabular-nums">{fmtRM(fin.budgetTotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Committed (approved POs)</span>
+              <span className="text-slate-500">Committed (POs + labour)</span>
               <span className="font-medium tabular-nums">{fmtRM(fin.committedCost)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Actual (delivered / invoiced / paid)</span>
+              <span className="text-slate-500">of which labour cost</span>
+              <span className="font-medium tabular-nums">{fmtRM(fin.labourCost)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Actual (delivered / paid + labour)</span>
               <span className="font-medium tabular-nums">{fmtRM(fin.actualCost)}</span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
@@ -116,6 +130,32 @@ export async function OverviewTab({
           </dl>
         </Card>
       </div>
+
+      <Card
+        title="Recent Documents"
+        className="lg:col-span-2"
+        action={
+          <Link
+            href={`/projects/${project.id}?tab=documents`}
+            className="text-sm font-medium text-slate-500 hover:text-slate-900"
+          >
+            Document centre →
+          </Link>
+        }
+      >
+        {!recentDocs?.length ? (
+          <EmptyState message="No documents yet — upload from the Documents tab." />
+        ) : (
+          <div>
+            <AttachmentChips docs={recentDocs as ProjectDocument[]} projectId={project.id} />
+            <p className="text-xs text-slate-400 mt-3">
+              {(recentDocs as ProjectDocument[])
+                .map((d) => `${d.file_name} (${d.document_type ?? "Other"})`)
+                .join(" · ")}
+            </p>
+          </div>
+        )}
+      </Card>
 
       <Card title="Recent Site Progress" className="lg:col-span-2">
         {!recentLogs?.length ? (
