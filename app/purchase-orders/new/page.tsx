@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { createPO } from "@/lib/actions/procurement";
+import { COST_CATEGORIES } from "@/lib/categories";
 import { fmtRM, today } from "@/lib/format";
 import type { PRItem } from "@/lib/types";
 
@@ -52,6 +53,15 @@ export default async function NewPOPage({
                 {(suppliers ?? []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Cost centre">
+              <Select name="cost_category" defaultValue="material">
+                {COST_CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label}
                   </option>
                 ))}
               </Select>

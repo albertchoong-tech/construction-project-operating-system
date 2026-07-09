@@ -156,6 +156,15 @@ export async function createPO(
   const { data: existing } = await supabase.from("purchase_orders").select("po_no");
   const po_no = nextDocNo("PO", (existing ?? []).map((r) => r.po_no));
 
+  const VALID_COST_CATEGORIES = [
+    "material", "labour", "subcontractor", "plant_equipment",
+    "transport", "permit_statutory", "site_office", "miscellaneous",
+  ];
+  const costCategoryRaw = (formData.get("cost_category") as string) || "material";
+  const cost_category = VALID_COST_CATEGORIES.includes(costCategoryRaw)
+    ? costCategoryRaw
+    : "material";
+
   const { error } = await supabase.from("purchase_orders").insert({
     project_id,
     pr_id,
@@ -164,6 +173,7 @@ export async function createPO(
     issue_date: (formData.get("issue_date") as string) || today(),
     delivery_date: ((formData.get("delivery_date") as string) || "").trim() || null,
     status: "draft",
+    cost_category,
     total_amount,
     notes: ((formData.get("notes") as string) || "").trim() || null,
   });

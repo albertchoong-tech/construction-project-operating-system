@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getPortfolioSnapshot } from "@/lib/portfolio";
 import { PageHeader, Card, Table, Td, EmptyState, StatCard, StatusBadge } from "@/components/ui";
+import { HealthBadge } from "@/components/health-badge";
 import { ActionButton } from "@/components/action-button";
 import { ApproveClaimButton } from "@/components/approve-claim-button";
 import { actionPR, actionPO } from "@/lib/actions/procurement";
 import { actionVO, approveClaim } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, fmtPct } from "@/lib/format";
-import { PO_ACTUAL_STATUSES, PO_COMMITTED_STATUSES } from "@/lib/financials";
 
 export const dynamic = "force-dynamic";
 
@@ -21,50 +21,18 @@ type QueueItem = {
 };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { projects, perProject, totals, raw } = await getPortfolioSnapshot();
 
-  const [
-    { data: projects },
-    { data: budgets },
-    { data: pos },
-    { data: vos },
-    { data: claims },
-    { data: receipts },
-    { data: supplierPays },
-    { data: pendingPRs },
-  ] = await Promise.all([
-    supabase.from("projects").select("*, clients(name)").order("end_date"),
-    supabase.from("budgets").select("project_id, budgeted_amount"),
-    supabase.from("purchase_orders").select("id, po_no, project_id, status, total_amount, delivery_date, created_at, projects(name), suppliers(name)"),
-    supabase.from("variation_orders").select("id, vo_no, project_id, status, amount, description, created_at, projects(name)"),
-    supabase.from("progress_claims").select("id, claim_no, project_id, status, claimed_amount, approved_amount, created_at, projects(name)"),
-    supabase.from("customer_payments").select("amount"),
-    supabase.from("supplier_payments").select("amount"),
-    supabase.from("purchase_requests").select("id, pr_no, project_id, status, items, created_at, projects(name)").eq("status", "pending"),
-  ]);
-
+  const activeProjects = projects.filter((p) => p.status === "active");
   const todayStr = new Date().toISOString().slice(0, 10);
-  const activeProjects = (projects ?? []).filter((p) => p.status === "active");
-
-  // Company-wide KPIs
-  const totalReceived = (receipts ?? []).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const totalPaidOut = (supplierPays ?? []).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const approvedClaimTotal = (claims ?? [])
-    .filter((c) => ["approved", "paid"].includes(c.status))
-    .reduce((a, c) => a + (Number(c.approved_amount) || 0), 0);
-  const outstandingReceivable = Math.max(0, approvedClaimTotal - totalReceived);
-  const actualCost = (pos ?? [])
-    .filter((po) => PO_ACTUAL_STATUSES.includes(po.status))
-    .reduce((a, po) => a + (Number(po.total_amount) || 0), 0);
-  const outstandingPayable = Math.max(0, actualCost - totalPaidOut);
 
   // Approval queue, oldest first
   const queue: QueueItem[] = [
-    ...(pendingPRs ?? []).map((pr) => ({
+    ...raw.pendingPRs.map((pr) => ({
       kind: "pr" as const,
       id: pr.id,
       docNo: pr.pr_no ?? "PR",
-      projectName: (pr.projects as { name?: string } | null)?.name ?? "—",
+      projectName: pr.projects?.name ?? "—",
       description: ((pr.items as { description?: string }[]) ?? [])
         .map((i) => i.description)
         .join(", "),
@@ -74,35 +42,35 @@ export default async function DashboardPage() {
       ),
       createdAt: pr.created_at,
     })),
-    ...(pos ?? [])
+    ...raw.pos
       .filter((po) => po.status === "draft")
       .map((po) => ({
         kind: "po" as const,
         id: po.id,
         docNo: po.po_no ?? "PO",
-        projectName: (po.projects as { name?: string } | null)?.name ?? "—",
-        description: `Supplier: ${(po.suppliers as { name?: string } | null)?.name ?? "—"}`,
+        projectName: po.projects?.name ?? "—",
+        description: `Supplier: ${po.suppliers?.name ?? "—"}`,
         amount: Number(po.total_amount) || 0,
         createdAt: po.created_at,
       })),
-    ...(vos ?? [])
+    ...raw.vos
       .filter((vo) => ["draft", "pending"].includes(vo.status))
       .map((vo) => ({
         kind: "vo" as const,
         id: vo.id,
         docNo: vo.vo_no ?? "VO",
-        projectName: (vo.projects as { name?: string } | null)?.name ?? "—",
+        projectName: vo.projects?.name ?? "—",
         description: vo.description,
         amount: Number(vo.amount) || 0,
         createdAt: vo.created_at,
       })),
-    ...(claims ?? [])
+    ...raw.claims
       .filter((c) => c.status === "submitted")
       .map((c) => ({
         kind: "claim" as const,
         id: c.id,
         docNo: c.claim_no ?? "Claim",
-        projectName: (c.projects as { name?: string } | null)?.name ?? "—",
+        projectName: c.projects?.name ?? "—",
         description: "Progress claim awaiting certification",
         amount: Number(c.claimed_amount) || 0,
         createdAt: c.created_at,
@@ -113,43 +81,11 @@ export default async function DashboardPage() {
   const ageDays = (iso: string) =>
     Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
 
-  // Per-project health
-  const budgetByProject = new Map<string, number>();
-  for (const b of budgets ?? []) {
-    budgetByProject.set(
-      b.project_id,
-      (budgetByProject.get(b.project_id) ?? 0) + (Number(b.budgeted_amount) || 0),
-    );
-  }
-  const committedByProject = new Map<string, number>();
-  const overduePOsByProject = new Map<string, number>();
-  for (const po of pos ?? []) {
-    if (PO_COMMITTED_STATUSES.includes(po.status)) {
-      committedByProject.set(
-        po.project_id,
-        (committedByProject.get(po.project_id) ?? 0) + (Number(po.total_amount) || 0),
-      );
-    }
-    if (
-      po.delivery_date &&
-      po.delivery_date < todayStr &&
-      !["delivered", "invoiced", "paid"].includes(po.status)
-    ) {
-      overduePOsByProject.set(po.project_id, (overduePOsByProject.get(po.project_id) ?? 0) + 1);
-    }
-  }
-
-  const health = activeProjects.map((p) => {
-    const budget = budgetByProject.get(p.id) ?? 0;
-    const committed = committedByProject.get(p.id) ?? 0;
-    const variancePct = budget > 0 ? ((budget - committed) / budget) * 100 : null;
-    const delayed = !!p.end_date && p.end_date < todayStr;
-    const overduePOs = overduePOsByProject.get(p.id) ?? 0;
-    // Rank worst-first: over budget, then delayed, then overdue POs
-    const risk = (variancePct !== null && variancePct < 0 ? 100 : 0) + (delayed ? 50 : 0) + overduePOs * 10;
-    return { p, budget, committed, variancePct, delayed, overduePOs, risk };
-  });
-  health.sort((a, b) => b.risk - a.risk);
+  // Rank projects worst-first by health
+  const rank = { critical: 0, attention: 1, healthy: 2 };
+  const health = activeProjects
+    .map((p) => ({ p, snap: perProject.get(p.id)! }))
+    .sort((a, b) => rank[a.snap.health.status] - rank[b.snap.health.status]);
 
   return (
     <>
@@ -158,15 +94,16 @@ export default async function DashboardPage() {
         subtitle="Director view — cash, approvals and project health across the company"
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         <StatCard label="Active Projects" value={String(activeProjects.length)} />
         <StatCard label="Pending Approvals" value={String(queue.length)} tone={queue.length ? "warn" : "default"} />
-        <StatCard label="Outstanding Receivables" value={fmtRM(outstandingReceivable)} tone="warn" hint="Approved claims not yet received" />
-        <StatCard label="Outstanding Payables" value={fmtRM(outstandingPayable)} tone="warn" hint="Delivered POs not yet paid" />
+        <StatCard label="Outstanding Receivables" value={fmtRM(totals.receivable)} tone="warn" hint="Approved claims not yet received" />
+        <StatCard label="Outstanding Payables" value={fmtRM(totals.payable)} tone="warn" hint="Delivered POs not yet paid" />
+        <StatCard label="Labour Cost" value={fmtRM(totals.labour)} hint="All projects to date" />
         <StatCard
           label="Cash Position"
-          value={fmtRM(totalReceived - totalPaidOut)}
-          tone={totalReceived - totalPaidOut >= 0 ? "good" : "bad"}
+          value={fmtRM(totals.received - totals.paidOut)}
+          tone={totals.received - totals.paidOut >= 0 ? "good" : "bad"}
           hint="Receipts minus supplier payments"
         />
       </div>
@@ -225,16 +162,16 @@ export default async function DashboardPage() {
           )}
         </Card>
 
-        <Card title="Project Health — highest risk first">
+        <Card title="Project Health — worst first">
           {!health.length ? (
             <EmptyState message="No active projects." />
           ) : (
             <Table
-              headers={["Project", "Completion", "Budget", "Committed", "Budget Variance", "Flags"]}
-              rightAlign={[2, 3, 4]}
+              headers={["Project", "Health", "Completion", "Budget", "Committed (incl. labour)", "Margin", "Notes"]}
+              rightAlign={[3, 4, 5]}
             >
-              {health.map(({ p, budget, committed, variancePct, delayed, overduePOs }) => (
-                <tr key={p.id} className="hover:bg-slate-50">
+              {health.map(({ p, snap }) => (
+                <tr key={p.id} className="hover:bg-slate-50 align-top">
                   <Td>
                     <Link href={`/projects/${p.id}`} className="font-medium text-slate-900 hover:underline">
                       {p.name}
@@ -242,38 +179,25 @@ export default async function DashboardPage() {
                     <span className="block text-xs text-slate-400">{(p.clients as { name?: string } | null)?.name}</span>
                   </Td>
                   <Td>
+                    <HealthBadge health={snap.health} />
+                  </Td>
+                  <Td>
                     <span className="inline-flex items-center gap-2">
-                      <span className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <span className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                         <span className="block h-full bg-emerald-500" style={{ width: `${Math.min(100, Number(p.completion_pct) || 0)}%` }} />
                       </span>
                       {fmtPct(p.completion_pct)}
                     </span>
                   </Td>
-                  <Td right>{fmtRM(budget)}</Td>
-                  <Td right>{fmtRM(committed)}</Td>
+                  <Td right>{fmtRM(snap.budget)}</Td>
+                  <Td right>{fmtRM(snap.committed)}</Td>
                   <Td right>
-                    {variancePct === null ? (
-                      <span className="text-slate-400">No budget</span>
-                    ) : (
-                      <span className={variancePct < 0 ? "text-rose-600 font-semibold" : variancePct < 10 ? "text-amber-600" : "text-emerald-600"}>
-                        {fmtPct(variancePct)}
-                      </span>
-                    )}
-                  </Td>
-                  <Td>
-                    <span className="flex flex-wrap gap-1.5">
-                      {delayed && (
-                        <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200 px-2 py-0.5 text-xs font-medium">
-                          Past end date
-                        </span>
-                      )}
-                      {overduePOs > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 px-2 py-0.5 text-xs font-medium">
-                          {overduePOs} overdue PO{overduePOs > 1 ? "s" : ""}
-                        </span>
-                      )}
-                      {!delayed && !overduePOs && <span className="text-slate-400 text-xs">On track</span>}
+                    <span className={snap.margin < 0 ? "text-rose-600 font-semibold" : snap.marginPct < 10 ? "text-amber-600" : "text-emerald-600"}>
+                      {fmtRM(snap.margin)}
                     </span>
+                  </Td>
+                  <Td className="whitespace-normal max-w-56 text-xs text-slate-500">
+                    {snap.health.reasons.length ? snap.health.reasons.join(" · ") : "On track"}
                   </Td>
                 </tr>
               ))}

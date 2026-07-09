@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProjectFinancials } from "@/lib/financials";
+import { computeHealth } from "@/lib/health";
 import { PageHeader, StatusBadge, LinkButton, StatCard } from "@/components/ui";
+import { HealthBadge } from "@/components/health-badge";
 import { fmtRM, fmtPct } from "@/lib/format";
 import type { Project } from "@/lib/types";
 import { OverviewTab } from "./overview-tab";
@@ -52,6 +54,31 @@ export default async function ProjectDetailPage({
   const fin = await getProjectFinancials(id, project.contract_value);
   const completion = Math.max(Number(project.completion_pct) || 0, fin.completionPct);
 
+  // Health signals: pending approvals, open inspection issues, overdue POs
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [pendingPRs, draftPOs, pendingVOs, submittedClaims, openIssues, overduePOs] =
+    await Promise.all([
+      supabase.from("purchase_requests").select("id", { count: "exact", head: true }).eq("project_id", id).eq("status", "pending"),
+      supabase.from("purchase_orders").select("id", { count: "exact", head: true }).eq("project_id", id).eq("status", "draft"),
+      supabase.from("variation_orders").select("id", { count: "exact", head: true }).eq("project_id", id).in("status", ["draft", "pending"]),
+      supabase.from("progress_claims").select("id", { count: "exact", head: true }).eq("project_id", id).eq("status", "submitted"),
+      supabase.from("inspection_records").select("id", { count: "exact", head: true }).eq("project_id", id).in("result", ["fail", "conditional"]),
+      supabase.from("purchase_orders").select("id", { count: "exact", head: true }).eq("project_id", id).lt("delivery_date", todayStr).in("status", ["draft", "approved"]),
+    ]);
+  const health = computeHealth({
+    grossMargin: fin.grossMargin,
+    grossMarginPct: fin.grossMarginPct,
+    revisedContractValue: fin.revisedContractValue,
+    outstandingReceivable: fin.outstandingReceivable,
+    completionPct: completion,
+    endDate: project.end_date,
+    projectStatus: project.status,
+    pendingApprovals:
+      (pendingPRs.count ?? 0) + (draftPOs.count ?? 0) + (pendingVOs.count ?? 0) + (submittedClaims.count ?? 0),
+    openIssues: openIssues.count ?? 0,
+    overduePOs: overduePOs.count ?? 0,
+  });
+
   return (
     <>
       <PageHeader
@@ -59,6 +86,7 @@ export default async function ProjectDetailPage({
         subtitle={`${project.project_code ?? "—"} · ${project.clients?.name ?? "No client"} · PM: ${project.project_manager ?? "—"}`}
         action={
           <span className="flex items-center gap-3">
+            <HealthBadge health={health} />
             <StatusBadge status={project.status} />
             <LinkButton href={`/projects/${id}/edit`} variant="secondary">
               Edit
@@ -77,7 +105,7 @@ export default async function ProjectDetailPage({
         <StatCard
           label="Committed Cost"
           value={fmtRM(fin.committedCost)}
-          hint={`Budget ${fmtRM(fin.budgetTotal)}`}
+          hint={`incl. labour ${fmtRM(fin.labourCost)} · budget ${fmtRM(fin.budgetTotal)}`}
           tone={fin.budgetTotal > 0 && fin.committedCost > fin.budgetTotal ? "bad" : "default"}
         />
         <StatCard

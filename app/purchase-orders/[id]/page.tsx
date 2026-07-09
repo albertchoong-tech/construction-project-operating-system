@@ -6,6 +6,7 @@ import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { actionPO, recordDelivery } from "@/lib/actions/procurement";
 import { recordSupplierPayment } from "@/lib/actions/financial";
+import { costCategoryLabel } from "@/lib/categories";
 import { fmtDate, fmtRM, today } from "@/lib/format";
 import type { MaterialDelivery, PRItem, SupplierPayment } from "@/lib/types";
 
@@ -84,6 +85,8 @@ export default async function PODetailPage({
             <dd className="text-slate-900">{fmtDate(po.issue_date)}</dd>
             <dt className="text-slate-500">Delivery due</dt>
             <dd className="text-slate-900">{fmtDate(po.delivery_date)}</dd>
+            <dt className="text-slate-500">Cost centre</dt>
+            <dd className="text-slate-900">{costCategoryLabel(po.cost_category)}</dd>
             <dt className="text-slate-500">Total amount</dt>
             <dd className="text-slate-900 font-semibold">{fmtRM(po.total_amount)}</dd>
             <dt className="text-slate-500">Paid to supplier</dt>

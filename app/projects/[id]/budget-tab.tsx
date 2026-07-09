@@ -3,6 +3,7 @@ import { Card, Table, Td, EmptyState } from "@/components/ui";
 import { ActionForm, Field, TextInput } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { addBudget, deleteBudget } from "@/lib/actions/boq";
+import { COST_CATEGORIES } from "@/lib/categories";
 import { fmtRM } from "@/lib/format";
 import type { ProjectFinancials } from "@/lib/financials";
 import type { Budget } from "@/lib/types";
@@ -77,6 +78,48 @@ export async function BudgetTab({
             </tr>
           </Table>
         )}
+      </Card>
+
+      <Card
+        title="Cost by Category"
+        action={
+          <span className="text-sm text-slate-500">
+            Total committed:{" "}
+            <span className="font-semibold text-slate-900 tabular-nums">
+              {fmtRM(fin.committedCost)}
+            </span>
+          </span>
+        }
+      >
+        {!Object.keys(fin.costByCategory).length ? (
+          <EmptyState message="No costs recorded yet — costs appear here from POs (by cost centre) and the Labour Cost module." />
+        ) : (
+          <Table headers={["Cost Centre", "Committed (RM)", "Actual (RM)", "Share"]} rightAlign={[1, 2, 3]}>
+            {COST_CATEGORIES.filter((c) => fin.costByCategory[c.key]).map((c) => {
+              const entry = fin.costByCategory[c.key];
+              const share = fin.committedCost > 0 ? (entry.committed / fin.committedCost) * 100 : 0;
+              return (
+                <tr key={c.key} className="hover:bg-slate-50">
+                  <Td className="font-medium">{c.label}</Td>
+                  <Td right>{fmtRM(entry.committed)}</Td>
+                  <Td right>{fmtRM(entry.actual)}</Td>
+                  <Td right>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <span className="block h-full bg-slate-500" style={{ width: `${Math.min(100, share)}%` }} />
+                      </span>
+                      {share.toFixed(1)}%
+                    </span>
+                  </Td>
+                </tr>
+              );
+            })}
+          </Table>
+        )}
+        <p className="text-xs text-slate-400 mt-3">
+          Material / subcontractor and other centres come from purchase orders; labour comes from
+          the Labour Cost module.
+        </p>
       </Card>
 
       <Card title="Add Budget Category">
