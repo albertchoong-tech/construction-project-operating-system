@@ -31,6 +31,7 @@ export const MODULE_ACCESS: Record<string, Role[]> = {
   "variation-orders": ["director", "quantity_surveyor"],
   "progress-claims": ["director", "quantity_surveyor", "finance"],
   payments: ["director", "finance"],
+  "labour-costs": ["director", "finance"],
 };
 
 export function isValidRole(value: unknown): value is Role {
