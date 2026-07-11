@@ -92,7 +92,7 @@ export async function DirectorDashboard() {
         subtitle="Director view — cash, approvals and project health across the company"
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 xl:gap-4 mb-6">
         <StatCard label="Active Projects" value={String(activeProjects.length)} />
         <StatCard label="Pending Approvals" value={String(queue.length)} tone={queue.length ? "warn" : "default"} />
         <StatCard label="Outstanding Receivables" value={fmtRM(totals.receivable)} tone="warn" hint="Approved claims not yet received" />

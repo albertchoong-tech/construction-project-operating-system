@@ -214,9 +214,13 @@ export function StatCard({
           ? "text-rose-600"
           : "text-slate-900";
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-5 py-4">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-4 py-4 min-w-0">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`text-2xl font-semibold mt-1 tabular-nums ${valueColor}`}>{value}</p>
+      <p
+        className={`font-semibold mt-1 tabular-nums tracking-tight leading-tight break-words text-[clamp(1rem,0.45rem+1.1vw,1.5rem)] ${valueColor}`}
+      >
+        {value}
+      </p>
       {hint && <p className="text-xs text-slate-400 mt-1">{hint}</p>}
     </div>
   );
