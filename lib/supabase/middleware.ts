@@ -34,11 +34,22 @@ export async function updateSession(request: NextRequest) {
       },
     });
 
+    const path = request.nextUrl.pathname;
+
+    // PWA assets must be reachable without a session — browsers fetch the
+    // manifest and service worker script without auth cookies.
+    if (
+      path === "/sw.js" ||
+      path === "/manifest.webmanifest" ||
+      path.startsWith("/icons/")
+    ) {
+      return supabaseResponse;
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const path = request.nextUrl.pathname;
     const isLoginPage = path === "/login" || path.startsWith("/auth");
 
     // Carry refreshed session cookies onto any redirect we issue
