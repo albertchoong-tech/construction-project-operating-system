@@ -8,7 +8,7 @@ export type SessionProfile = {
   role: Role;
 };
 
-/** Current session's profile, or null when signed out. */
+/** Current session's profile, or null when signed out or deactivated. */
 export async function getSessionProfile(): Promise<SessionProfile | null> {
   const supabase = await createClient();
   const {
@@ -18,16 +18,18 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, active")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  const role = profile?.role ?? user.user_metadata?.role;
+  if (profile && profile.active === false) return null;
+
+  const role = profile?.role;
   return {
     userId: user.id,
     email: user.email ?? "",
     fullName: profile?.full_name || user.user_metadata?.full_name || user.email || "User",
-    role: isValidRole(role) ? role : "project_manager",
+    role: isValidRole(role) ? role : "site_supervisor",
   };
 }
 

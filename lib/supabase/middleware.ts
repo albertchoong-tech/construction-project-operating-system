@@ -63,8 +63,20 @@ export async function updateSession(request: NextRequest) {
       return isLoginPage ? response : redirectTo("/login");
     }
 
-    const metaRole = user.user_metadata?.role;
-    const role: Role = isValidRole(metaRole) ? metaRole : "project_manager";
+    // profiles is the source of truth for role and activation, so Director
+    // changes take effect on the user's next request — no re-login needed.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile && profile.active === false) {
+      await supabase.auth.signOut();
+      return redirectTo("/login?deactivated=1");
+    }
+
+    const role: Role = isValidRole(profile?.role) ? profile.role : "site_supervisor";
 
     if (isLoginPage) return redirectTo(homeFor(role));
 

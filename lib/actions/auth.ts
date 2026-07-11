@@ -18,8 +18,20 @@ export async function signIn(
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
+  // Role and activation come from profiles (Directors manage them on /team)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, active")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (profile && profile.active === false) {
+    await supabase.auth.signOut();
+    return { error: "This account has been deactivated. Contact your Director." };
+  }
+
   revalidatePath("/", "layout");
-  const role = data.user?.user_metadata?.role;
+  const role = profile?.role;
   redirect(isValidRole(role) ? homeFor(role) : "/projects");
 }
 
@@ -30,18 +42,18 @@ export async function signUp(
   const email = ((formData.get("email") as string) || "").trim();
   const password = (formData.get("password") as string) || "";
   const full_name = ((formData.get("full_name") as string) || "").trim();
-  const role = (formData.get("role") as string) || "";
 
   if (!email || !password) return { error: "Email and password are required." };
   if (password.length < 8) return { error: "Password must be at least 8 characters." };
   if (!full_name) return { error: "Your name is required." };
-  if (!isValidRole(role)) return { error: "Pick a role." };
 
   const supabase = await createClient();
+  // New accounts always start as Site Supervisor; a Director assigns the real
+  // role on /team. (The DB trigger enforces this regardless of what's sent.)
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name, role } },
+    options: { data: { full_name } },
   });
   if (error) return { error: error.message };
 
@@ -53,7 +65,7 @@ export async function signUp(
   }
 
   revalidatePath("/", "layout");
-  redirect(homeFor(role));
+  redirect(homeFor("site_supervisor"));
 }
 
 export async function signOut(): Promise<void> {

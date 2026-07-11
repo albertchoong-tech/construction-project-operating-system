@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ActionForm, Field, TextInput, Select, inputClass } from "@/components/form";
+import { ActionForm, Field, TextInput, inputClass } from "@/components/form";
 import { signIn, signUp } from "@/lib/actions/auth";
-import { ROLES, ROLE_LABELS } from "@/lib/roles";
 
 const REMEMBER_KEY = "hsh-remembered-email";
 
@@ -153,15 +152,10 @@ export function LoginForm() {
               minLength={8}
             />
           </Field>
-          <Field label="Role" required>
-            <Select name="role" defaultValue="project_manager">
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+            New accounts start as <strong>Site Supervisor</strong>. A Director assigns your
+            role from the Team page after you sign up.
+          </p>
         </ActionForm>
       )}
     </div>
