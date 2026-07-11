@@ -1,5 +1,11 @@
 # HSH ProjectOS — Development Backlog
 
+> **Status tracking has moved to [ROADMAP.md](ROADMAP.md)** — that file is the living,
+> append-only record of what is shipped vs. pending. This file keeps the full sprint
+> specifications (objectives, features, testing checklists, definitions of done).
+> Sprint 8 below was **completed 2026-07-12** (`0e2cb4c`); its demo-account retirement
+> item moved to the ROADMAP Go-Live Checklist.
+
 _Compiled 2026-07-12 from the production codebase (commit `d831271`), not just the original PRD._
 _Production: https://construction-project-operating-syst.vercel.app · Supabase `brzbcundygwysrfhjmet` · auto-deploys from `main`._
 
