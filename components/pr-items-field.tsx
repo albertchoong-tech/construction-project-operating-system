@@ -17,9 +17,9 @@ export function PRItemsField() {
   const total = items.reduce((a, i) => a + (Number(i.qty) || 0) * (Number(i.est_rate) || 0), 0);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 sm:space-y-2">
       <input type="hidden" name="items_json" value={JSON.stringify(items)} />
-      <div className="grid grid-cols-12 gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         <span className="col-span-5">Item description</span>
         <span className="col-span-2">Unit</span>
         <span className="col-span-2">Qty</span>
@@ -27,45 +27,63 @@ export function PRItemsField() {
         <span />
       </div>
       {items.map((item, idx) => (
-        <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-          <input
-            className={`${inputClass} col-span-5`}
-            value={item.description}
-            onChange={(e) => update(idx, { description: e.target.value })}
-            placeholder="e.g. Cement OPC 50kg"
-          />
-          <input
-            className={`${inputClass} col-span-2`}
-            value={item.unit}
-            onChange={(e) => update(idx, { unit: e.target.value })}
-            placeholder="bag"
-          />
-          <input
-            className={`${inputClass} col-span-2`}
-            type="number"
-            min="0"
-            step="0.01"
-            value={item.qty || ""}
-            onChange={(e) => update(idx, { qty: parseFloat(e.target.value) || 0 })}
-            placeholder="0"
-          />
-          <input
-            className={`${inputClass} col-span-2`}
-            type="number"
-            min="0"
-            step="0.01"
-            value={item.est_rate || ""}
-            onChange={(e) => update(idx, { est_rate: parseFloat(e.target.value) || 0 })}
-            placeholder="0.00"
-          />
+        <div
+          key={idx}
+          className="grid grid-cols-6 sm:grid-cols-12 gap-2 items-center border border-slate-200 sm:border-0 rounded-xl sm:rounded-none p-3 sm:p-0"
+        >
+          <label className="col-span-6 sm:col-span-5 block">
+            <span className="block sm:hidden text-xs font-medium text-slate-500 mb-1">Item description</span>
+            <input
+              className={inputClass}
+              value={item.description}
+              onChange={(e) => update(idx, { description: e.target.value })}
+              placeholder="e.g. Cement OPC 50kg"
+            />
+          </label>
+          <label className="col-span-2 block">
+            <span className="block sm:hidden text-xs font-medium text-slate-500 mb-1">Unit</span>
+            <input
+              className={inputClass}
+              value={item.unit}
+              onChange={(e) => update(idx, { unit: e.target.value })}
+              placeholder="bag"
+            />
+          </label>
+          <label className="col-span-2 block">
+            <span className="block sm:hidden text-xs font-medium text-slate-500 mb-1">Qty</span>
+            <input
+              className={inputClass}
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={item.qty || ""}
+              onChange={(e) => update(idx, { qty: parseFloat(e.target.value) || 0 })}
+              placeholder="0"
+            />
+          </label>
+          <label className="col-span-2 block">
+            <span className="block sm:hidden text-xs font-medium text-slate-500 mb-1">Rate (RM)</span>
+            <input
+              className={inputClass}
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={item.est_rate || ""}
+              onChange={(e) => update(idx, { est_rate: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00"
+            />
+          </label>
           <button
             type="button"
             onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
             disabled={items.length === 1}
-            className="text-slate-400 hover:text-rose-600 disabled:opacity-30 text-lg leading-none"
+            className="col-span-6 sm:col-span-1 min-h-11 sm:min-h-0 rounded-lg border border-slate-200 sm:border-0 text-sm sm:text-lg text-slate-500 hover:text-rose-600 disabled:opacity-30 leading-none"
             aria-label="Remove item"
           >
-            ×
+            <span className="sm:hidden">Remove item</span>
+            <span className="hidden sm:inline">×</span>
           </button>
         </div>
       ))}

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSessionProfile } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { PRItemsField } from "@/components/pr-items-field";
@@ -14,6 +15,7 @@ export default async function NewPRPage({
 }) {
   const { project } = await searchParams;
   const supabase = await createClient();
+  const profile = await getSessionProfile();
   const { data: projects } = await supabase
     .from("projects")
     .select("id, name, project_code")
@@ -37,7 +39,7 @@ export default async function NewPRPage({
               </Select>
             </Field>
             <Field label="Requested by">
-              <TextInput name="requested_by" placeholder="Your name" />
+              <TextInput name="requested_by" defaultValue={profile?.fullName ?? ""} placeholder="Your name" />
             </Field>
             <Field label="Request date">
               <TextInput name="request_date" type="date" defaultValue={today()} />

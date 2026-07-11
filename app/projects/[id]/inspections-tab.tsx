@@ -1,15 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSessionProfile } from "@/lib/auth";
 import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { IssueCategoryField } from "@/components/issue-category-field";
-import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
+import { AttachmentChips, groupByEntity } from "@/components/attachments";
+import { PhotoField } from "@/components/photo-field";
 import { addInspection, deleteInspection } from "@/lib/actions/site";
 import { fmtDate, today } from "@/lib/format";
 import type { InspectionRecord, ProjectDocument } from "@/lib/types";
 
 export async function InspectionsTab({ projectId }: { projectId: string }) {
   const supabase = await createClient();
+  const profile = await getSessionProfile();
   const [{ data: inspections, error }, { data: docs }] = await Promise.all([
     supabase
       .from("inspection_records")
@@ -81,15 +84,14 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
       </Card>
 
       <Card title="Record Inspection">
-        <ActionForm action={addInspection} submitLabel="Save Inspection">
+        <ActionForm
+          action={addInspection}
+          submitLabel="Save Inspection"
+          draftKey={`inspection-${projectId}`}
+        >
           <input type="hidden" name="project_id" value={projectId} />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Field label="Inspection date">
-              <TextInput name="inspection_date" type="date" defaultValue={today()} />
-            </Field>
-            <Field label="Inspector">
-              <TextInput name="inspector" placeholder="Name / authority" />
-            </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <PhotoField label="Photos" className="sm:col-span-4" />
             <Field label="Area">
               <TextInput name="area" placeholder="e.g. Wet areas, Level 2" />
             </Field>
@@ -100,13 +102,18 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
                 <option value="fail">Fail</option>
               </Select>
             </Field>
-            <div className="col-span-2 sm:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2 grid grid-cols-1 gap-4">
               <IssueCategoryField />
             </div>
-            <Field label="Remarks" className="col-span-2 sm:col-span-4">
+            <Field label="Remarks" className="sm:col-span-4">
               <TextArea name="remarks" placeholder="Findings, follow-up actions…" />
             </Field>
-            <FileField label="Photos / documents" className="col-span-2 sm:col-span-4" />
+            <Field label="Inspection date">
+              <TextInput name="inspection_date" type="date" defaultValue={today()} />
+            </Field>
+            <Field label="Inspector" className="sm:col-span-3">
+              <TextInput name="inspector" defaultValue={profile?.fullName ?? ""} placeholder="Name / authority" />
+            </Field>
           </div>
         </ActionForm>
       </Card>

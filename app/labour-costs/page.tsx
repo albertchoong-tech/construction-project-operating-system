@@ -70,8 +70,8 @@ export default async function LabourCostsPage() {
       <div className="space-y-6">
         <Card title="Record Labour Cost">
           <ActionForm action={addLabourCost} submitLabel="Save Entry">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Field label="Project" required className="col-span-2">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-4 gap-4">
+              <Field label="Project" required className="min-[420px]:col-span-2">
                 <Select name="project_id" required defaultValue="">
                   <option value="">— Select project —</option>
                   {(projects ?? []).map((p) => (
@@ -115,7 +115,7 @@ export default async function LabourCostsPage() {
               <Field label="Other payroll cost (RM)">
                 <TextInput name="other_cost" type="number" step="0.01" min="0" placeholder="0.00" />
               </Field>
-              <Field label="Remarks" className="col-span-2 sm:col-span-3">
+              <Field label="Remarks" className="min-[420px]:col-span-2 sm:col-span-3">
                 <TextInput name="remarks" placeholder="e.g. Overtime for slab casting" />
               </Field>
             </div>

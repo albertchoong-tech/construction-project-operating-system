@@ -14,7 +14,7 @@ export function ClientForm({ client }: { client?: Client }) {
           <TextInput name="contact_person" defaultValue={client?.contact_person ?? ""} placeholder="e.g. Mr Tan Wei Liang" />
         </Field>
         <Field label="Phone">
-          <TextInput name="phone" defaultValue={client?.phone ?? ""} placeholder="+60…" />
+          <TextInput name="phone" type="tel" defaultValue={client?.phone ?? ""} placeholder="+60…" />
         </Field>
         <Field label="Email">
           <TextInput name="email" type="email" defaultValue={client?.email ?? ""} placeholder="name@email.com" />

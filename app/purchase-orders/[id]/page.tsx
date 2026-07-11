@@ -7,6 +7,7 @@ import { ActionButton } from "@/components/action-button";
 import { actionPO, recordDelivery } from "@/lib/actions/procurement";
 import { recordSupplierPayment } from "@/lib/actions/financial";
 import { costCategoryLabel } from "@/lib/categories";
+import { getSessionProfile } from "@/lib/auth";
 import { fmtDate, fmtRM, today } from "@/lib/format";
 import type { MaterialDelivery, PRItem, SupplierPayment } from "@/lib/types";
 
@@ -130,7 +131,11 @@ export default async function PODetailPage({
                   <TextInput name="delivery_note_no" placeholder="DN-…" />
                 </Field>
                 <Field label="Received by" className="sm:col-span-2">
-                  <TextInput name="received_by" placeholder="Site supervisor name" />
+                  <TextInput
+                    name="received_by"
+                    defaultValue={(await getSessionProfile())?.fullName ?? ""}
+                    placeholder="Site supervisor name"
+                  />
                 </Field>
                 <Field label="Notes" className="sm:col-span-2">
                   <TextArea name="notes" placeholder="Condition, shortages, remarks…" />

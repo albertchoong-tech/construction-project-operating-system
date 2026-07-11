@@ -1,14 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSessionProfile } from "@/lib/auth";
 import { Card, Table, Td, EmptyState } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
-import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
+import { AttachmentChips, groupByEntity } from "@/components/attachments";
+import { PhotoField } from "@/components/photo-field";
 import { addProgressLog, deleteProgressLog } from "@/lib/actions/site";
 import { fmtDate, fmtPct, today } from "@/lib/format";
 import type { ProjectDocument, SiteProgressLog } from "@/lib/types";
 
 export async function ProgressTab({ projectId }: { projectId: string }) {
   const supabase = await createClient();
+  const profile = await getSessionProfile();
   const [{ data: logs, error }, { data: logDocs }] = await Promise.all([
     supabase
       .from("site_progress_logs")
@@ -34,31 +37,35 @@ export async function ProgressTab({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-6">
       <Card title="Log Progress">
-        <ActionForm action={addProgressLog} submitLabel="Save Progress Log">
+        <ActionForm
+          action={addProgressLog}
+          submitLabel="Save Progress Log"
+          draftKey={`progress-${projectId}`}
+        >
           <input type="hidden" name="project_id" value={projectId} />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Field label="Log date">
-              <TextInput name="log_date" type="date" defaultValue={today()} />
-            </Field>
-            <Field label="Reported by">
-              <TextInput name="reported_by" placeholder="Supervisor name" />
-            </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <PhotoField label="Site photos" className="sm:col-span-4" />
             <Field label="Completion %">
               <TextInput name="completion_pct" type="number" min="0" max="100" step="0.1" placeholder="0–100" />
             </Field>
-            <Field label="Workers on site">
-              <TextInput name="workers_count" type="number" min="0" placeholder="0" />
-            </Field>
-            <Field label="Work done" required className="col-span-2 sm:col-span-4">
+            <Field label="Work done" required className="sm:col-span-3">
               <TextArea name="work_done" required placeholder="What was completed today?" />
             </Field>
-            <Field label="Weather" className="col-span-1">
+            <Field label="Workers on site">
+              <TextInput name="workers_count" type="number" min="0" inputMode="numeric" placeholder="0" />
+            </Field>
+            <Field label="Weather">
               <TextInput name="weather" placeholder="Sunny / Rain…" />
             </Field>
-            <Field label="Issues" className="col-span-1 sm:col-span-3">
+            <Field label="Issues" className="sm:col-span-2">
               <TextInput name="issues" placeholder="Delays, shortages…" />
             </Field>
-            <FileField label="Site photos" className="col-span-2 sm:col-span-4" />
+            <Field label="Log date">
+              <TextInput name="log_date" type="date" defaultValue={today()} />
+            </Field>
+            <Field label="Reported by" className="sm:col-span-3">
+              <TextInput name="reported_by" defaultValue={profile?.fullName ?? ""} placeholder="Supervisor name" />
+            </Field>
           </div>
         </ActionForm>
       </Card>

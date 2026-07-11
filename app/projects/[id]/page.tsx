@@ -122,7 +122,7 @@ export default async function ProjectDetailPage({
             <Link
               key={t.key}
               href={`/projects/${id}?tab=${t.key}`}
-              className={`whitespace-nowrap px-3.5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`whitespace-nowrap px-3.5 py-2.5 min-h-11 flex items-center text-sm font-medium border-b-2 transition-colors ${
                 tab === t.key
                   ? "border-slate-900 text-slate-900"
                   : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"

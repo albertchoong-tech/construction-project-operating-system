@@ -17,7 +17,7 @@ export function SupplierForm({ supplier }: { supplier?: Supplier }) {
           <TextInput name="contact_person" defaultValue={supplier?.contact_person ?? ""} placeholder="Name" />
         </Field>
         <Field label="Phone">
-          <TextInput name="phone" defaultValue={supplier?.phone ?? ""} placeholder="+60…" />
+          <TextInput name="phone" type="tel" defaultValue={supplier?.phone ?? ""} placeholder="+60…" />
         </Field>
         <Field label="Email">
           <TextInput name="email" type="email" defaultValue={supplier?.email ?? ""} placeholder="sales@supplier.com" />

@@ -66,11 +66,11 @@ export async function BoqTab({ projectId }: { projectId: string }) {
       <Card title="Add BOQ Line Item">
         <ActionForm action={addBoqItem} submitLabel="Add Line Item">
           <input type="hidden" name="project_id" value={projectId} />
-          <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-6 gap-4">
             <Field label="Section">
               <TextInput name="section" placeholder="e.g. Structure" />
             </Field>
-            <Field label="Description" required className="col-span-2">
+            <Field label="Description" required className="min-[420px]:col-span-2">
               <TextInput name="description" required placeholder="Work description" />
             </Field>
             <Field label="Unit">

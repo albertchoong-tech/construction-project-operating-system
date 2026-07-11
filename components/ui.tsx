@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Children, cloneElement, isValidElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 export function PageHeader({
   title,
@@ -79,6 +80,9 @@ export function StatusBadge({ status }: { status: string | null | undefined }) {
   );
 }
 
+/** Desktop: a regular table. Below lg: each row renders as a stacked record
+ *  card, with the column header shown as a label beside each value (via the
+ *  data-label attribute + .table-cards CSS in globals.css). */
 export function Table({
   headers,
   children,
@@ -88,10 +92,25 @@ export function Table({
   children: ReactNode;
   rightAlign?: number[];
 }) {
+  // Inject each cell's column label so the mobile card CSS can display it
+  const labelledRows = Children.map(children, (row) => {
+    if (!isValidElement(row)) return row;
+    const rowEl = row as ReactElement<{ children?: ReactNode }>;
+    const cells = Children.map(rowEl.props.children, (cell, i) => {
+      if (isValidElement(cell) && cell.type === Td) {
+        return cloneElement(cell as ReactElement<{ label?: string }>, {
+          label: headers[i] ?? "",
+        });
+      }
+      return cell;
+    });
+    return cloneElement(rowEl, {}, cells);
+  });
+
   return (
-    <div className="overflow-x-auto -mx-5 -my-5">
-      <table className="min-w-full divide-y divide-slate-200 text-sm">
-        <thead>
+    <div className="table-cards overflow-x-auto lg:-mx-5 lg:-my-5">
+      <table className="min-w-full lg:divide-y lg:divide-slate-200 text-sm w-full">
+        <thead className="hidden lg:table-header-group">
           <tr>
             {headers.map((h, i) => (
               <th
@@ -105,7 +124,9 @@ export function Table({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">{children}</tbody>
+        <tbody className="lg:divide-y lg:divide-slate-100 bg-transparent lg:bg-white">
+          {labelledRows}
+        </tbody>
       </table>
     </div>
   );
@@ -115,13 +136,18 @@ export function Td({
   children,
   right = false,
   className = "",
+  label,
 }: {
   children: ReactNode;
   right?: boolean;
   className?: string;
+  label?: string;
 }) {
   return (
-    <td className={`px-5 py-3 whitespace-nowrap ${right ? "text-right tabular-nums" : ""} ${className}`}>
+    <td
+      data-label={label ?? ""}
+      className={`lg:px-5 lg:py-3 lg:whitespace-nowrap ${right ? "lg:text-right tabular-nums" : ""} ${className}`}
+    >
       {children}
     </td>
   );
@@ -161,7 +187,7 @@ export function LinkButton({
   return (
     <Link
       href={href}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${styles}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors min-h-11 lg:min-h-0 ${styles}`}
     >
       {children}
     </Link>

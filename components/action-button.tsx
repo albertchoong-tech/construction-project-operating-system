@@ -50,8 +50,8 @@ export function ActionButton({
       <button
         onClick={handleClick}
         disabled={pending}
-        className={`inline-flex items-center gap-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-          small ? "px-2.5 py-1 text-xs" : "px-3.5 py-2 text-sm"
+        className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 min-h-11 px-3.5 text-sm lg:min-h-0 ${
+          small ? "lg:px-2.5 lg:py-1 lg:text-xs" : "lg:px-3.5 lg:py-2 lg:text-sm"
         } ${VARIANTS[variant]}`}
       >
         {pending ? "Working…" : label}

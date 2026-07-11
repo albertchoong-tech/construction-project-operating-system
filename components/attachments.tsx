@@ -64,7 +64,7 @@ export function AttachmentChips({
           </a>
           {canDelete && (
             <ActionButton
-              label="×"
+              label="Remove"
               variant="danger"
               confirmMessage={`Delete "${d.file_name}"?`}
               action={deleteDocument.bind(null, d.id, projectId)}
