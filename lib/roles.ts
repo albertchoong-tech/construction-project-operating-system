@@ -21,13 +21,14 @@ export const ROLE_LABELS: Record<Role, string> = {
 /** Which roles may open each module (first URL segment). Writes are further
  *  restricted by RLS; this gates navigation and routing. */
 export const MODULE_ACCESS: Record<string, Role[]> = {
-  "": ["director"], // dashboard
+  "": ["director", "site_supervisor", "finance"], // role-specific dashboards
   projects: ["director", "project_manager", "quantity_surveyor", "site_supervisor", "finance"],
   clients: ["director", "project_manager", "quantity_surveyor"],
   suppliers: ["director", "purchasing_officer", "project_manager"],
   "purchase-requests": ["director", "purchasing_officer", "project_manager"],
   "purchase-orders": ["director", "purchasing_officer", "finance"],
   "site-progress": ["director", "project_manager", "site_supervisor"],
+  inspections: ["director", "project_manager", "site_supervisor"],
   "variation-orders": ["director", "quantity_surveyor"],
   "progress-claims": ["director", "quantity_surveyor", "finance"],
   payments: ["director", "finance"],
@@ -43,9 +44,9 @@ export function canAccessModule(role: Role, segment: string): boolean {
   return allowed ? allowed.includes(role) : true;
 }
 
-/** Landing page per role (dashboard for directors, first permitted module otherwise). */
+/** Landing page per role (role dashboard where one exists, first permitted module otherwise). */
 export function homeFor(role: Role): string {
-  if (role === "director") return "/";
+  if (MODULE_ACCESS[""].includes(role)) return "/";
   for (const [segment, roles] of Object.entries(MODULE_ACCESS)) {
     if (segment && roles.includes(role)) return `/${segment}`;
   }
