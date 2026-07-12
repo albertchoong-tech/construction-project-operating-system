@@ -24,9 +24,30 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 6d | Cost Centres & Health Indicator | 2026-07-09 | `2ade6a1` | PO cost centres, Cost-by-Category card, Healthy/Attention/Critical across dashboard/list/detail |
 | 7 | Mobile & PWA | 2026-07-11 | `3fa6071`, `aec692b`, `1b718ba` | Mobile nav (header/drawer/bottom bar), tables→cards, camera capture + compression, role dashboards, /inspections, installable PWA |
 | 7a | UX Polish | 2026-07-11 | `47d2864`, `3276239`, `d831271` | Password show/hide, Remember-me, KPI cards fit and asymmetric grid |
-| 8 | **User & Access Administration** | **2026-07-12** | `0e2cb4c` | See below — latest sprint |
+| 8 | User & Access Administration | 2026-07-12 | `0e2cb4c` | /team page, project-membership-scoped RLS, profiles as role source of truth, hardened sign-up |
+| 9 | **Quotation-to-Project** | **2026-07-12** | `0d83d21` | See below — latest sprint |
 
-### Sprint 8 — User & Access Administration (latest)
+### Sprint 9 — Quotation-to-Project (latest)
+
+Migration `0005_quotations.sql` (applied to the live database) plus app changes — closes the
+last unbuilt PRD MVP item:
+
+- ✅ `/quotations`: pipeline/won KPIs, list, and creation with client, job title, validity,
+  terms and a section-aware line-item editor (totals computed in the database)
+- ✅ Workflow: draft → submit → Director approve/reject with `approval_records` audit
+- ✅ **Convert to Project**: creates the project (auto `PRJ` code, contract value = quotation
+  total, client linked, start date today), copies every line into the BOQ with sections
+  preserved, and locks the quotation as `converted`
+- ✅ Client-ready document view at `/quotations/[id]` with Print/PDF (print CSS strips app
+  chrome); Quotation tab on converted projects links back
+- ✅ Sidebar module, Director + QS access (PMs/Supervisors excluded by module guard + RLS)
+- ✅ Verified end-to-end: QT-2026-001 (RM 39,200) → approved → PRJ-2026-005 with exact BOQ copy
+
+**Unfinished scope moved to backlog:** none — sprint shipped as specified. (Editing draft
+quotations remains intentionally out of scope; it belongs to Sprint 10 with all other
+record corrections. Quotation attachments deferred to the document centre's existing flow.)
+
+### Sprint 8 — User & Access Administration
 
 Migration `0004_team_access.sql` (applied to the live database) plus app changes:
 
@@ -43,19 +64,18 @@ Migration `0004_team_access.sql` (applied to the live database) plus app changes
 
 ---
 
-## 🚧 Backlog (future sprints — numbering unchanged, 9–14 remain valid)
+## 🚧 Backlog (future sprints — numbering unchanged, 10–14 remain valid)
 
 | Sprint | Name | Priority | Effort | Dependencies |
 |---|---|---|---|---|
-| 9 | Quotation-to-Project Module | 🟠 High | Medium (~1 wk) | None |
-| 10 | Record Editing & Corrections | 🟠 High | Medium (~1 wk) | None |
+| 10 | Record Editing & Corrections (now incl. draft quotations) | 🟠 High | Medium (~1 wk) | None |
 | 11 | Reporting & Exports | 🟡 Medium | Large (~1–2 wk) | Best after 10 |
 | 12 | Notifications & Scheduled Automations | 🟡 Medium | Medium–Large (~1 wk) | Email provider key; after 8 ✅ |
 | 13 | Mobile Offline & Field Hardening | 🟡 Medium | Large (~1–2 wk) | None |
-| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9–10 in real use; Anthropic key |
+| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9 ✅–10 in real use; Anthropic key |
 
-**Sequencing:** Sprint 8 (the gate to real users) is done. Track A (9 → 10 → 11) and
-Track B (12 → 13) can now run concurrently; Sprint 14 last.
+**Sequencing:** Sprints 8–9 done. Recommended next: Sprint 10 (corrections — scope now also
+covers editing draft quotations); Sprint 12 (notifications) can run concurrently.
 
 ### Go-Live Checklist (carried-over items, do before real company data)
 - [ ] Real owner signs up → Director promotes the account on `/team` → deactivate `director.demo@hshprojectos.com` and `supervisor.demo@hshprojectos.com`
@@ -66,11 +86,12 @@ Track B (12 → 13) can now run concurrently; Sprint 14 last.
 ### Known Limitations (current production behaviour)
 - A deactivated user's already-issued JWT can read via raw REST until it expires (≤1 h); the app itself signs them out on the next page load
 - Storage uploads/deletes require login but are not membership-scoped to project paths (metadata records are)
-- Records are not editable after creation (Sprint 10) and deletes are hard deletes
-- `quotations` table still has no UI (Sprint 9)
+- Records are not editable after creation (Sprint 10) and deletes are hard deletes — this now includes draft quotations (delete-and-recreate to amend)
 - Role changes take effect on the target user's next request; their currently rendered page may be stale until navigation
+- Quotation print view uses the browser's Print/PDF; no server-generated PDF files yet
 
 ---
 
 ## Update Log
+- **2026-07-12** — Sprint 9 appended as completed (`0d83d21`); no unfinished scope; draft-quotation editing noted as part of Sprint 10's corrections scope; backlog renumbering reviewed — 10–14 unchanged.
 - **2026-07-12** — Sprint 8 appended as completed; demo-account retirement moved to Go-Live Checklist; backlog renumbering reviewed — 9–14 unchanged. (Roadmap file created; prior history imported from BACKLOG.md.)
