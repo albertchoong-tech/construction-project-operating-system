@@ -24,6 +24,34 @@ export type Project = {
   clients?: Client | null;
 };
 
+export type Quotation = {
+  id: string;
+  project_id: string | null;
+  client_id: string | null;
+  quotation_no: string | null;
+  title: string | null;
+  issue_date: string | null;
+  valid_until: string | null;
+  total_amount: number;
+  status: "draft" | "submitted" | "approved" | "rejected" | "converted";
+  notes: string | null;
+  created_at: string;
+  clients?: Client | null;
+  projects?: Project | null;
+};
+
+export type QuotationItem = {
+  id: string;
+  quotation_id: string;
+  section: string | null;
+  description: string;
+  unit: string | null;
+  quantity: number;
+  unit_rate: number;
+  total_amount: number;
+  created_at: string;
+};
+
 export type BoqItem = {
   id: string;
   project_id: string;
