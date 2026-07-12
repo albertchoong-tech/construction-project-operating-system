@@ -78,9 +78,6 @@ export default async function PurchaseRequestsPage() {
                           variant="primary"
                           action={submitPR.bind(null, pr.id)}
                         />
-                        <LinkButton href={`/purchase-requests/${pr.id}/edit`} variant="secondary">
-                          Edit
-                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"

@@ -1,11 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireDirector } from "@/lib/auth";
 import { uploadAttachments } from "@/lib/attachments";
-import { recordAudit } from "@/lib/audit";
 import { nextDocNo, today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
 
@@ -120,55 +118,6 @@ export async function deleteVO(id: string): Promise<{ error?: string } | void> {
   revalidateFinancials(data?.project_id);
 }
 
-/** Edit an unapproved VO (draft/pending). */
-export async function updateVO(
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  const id = (formData.get("id") as string) || "";
-  const description = ((formData.get("description") as string) || "").trim();
-  if (!id) return { error: "Missing VO." };
-  if (!description) return { error: "Description is required." };
-  const amount = parseFloat((formData.get("amount") as string) || "0");
-  if (isNaN(amount)) return { error: "Amount must be a number." };
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("variation_orders")
-    .update({
-      description,
-      amount,
-      requested_by: ((formData.get("requested_by") as string) || "").trim() || null,
-      request_date: (formData.get("request_date") as string) || today(),
-    })
-    .eq("id", id)
-    .in("status", ["draft", "pending"])
-    .select("project_id")
-    .single();
-  if (error) return { error: `Could not update VO: ${error.message}. Only unapproved VOs are editable.` };
-
-  revalidateFinancials(data?.project_id);
-  redirect("/variation-orders");
-}
-
-/** Cancel an approved VO — Director only, audited. Retained; drops from the
- *  revised contract value (only 'approved' VOs count). */
-export async function cancelVO(id: string, remarks: string): Promise<{ error?: string } | void> {
-  const auth = await requireDirector();
-  if ("error" in auth) return auth;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("variation_orders")
-    .update({ status: "cancelled" })
-    .eq("id", id)
-    .eq("status", "approved")
-    .select("project_id")
-    .single();
-  if (error) return { error: "Only approved VOs can be cancelled." };
-  await recordAudit("variation_order", id, "cancelled", auth.approver, remarks);
-  revalidateFinancials(data?.project_id);
-}
-
 // ── Progress Claims ──────────────────────────────────────────────────────────
 
 export async function createClaim(
@@ -266,61 +215,6 @@ export async function deleteClaim(id: string): Promise<{ error?: string } | void
     .single();
   if (error) return { error: "Only unapproved claims can be deleted." };
   revalidateFinancials(data?.project_id);
-}
-
-/** Edit a claim that is still draft or submitted (not yet certified). */
-export async function updateClaim(
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  const id = (formData.get("id") as string) || "";
-  if (!id) return { error: "Missing claim." };
-  const claimed_amount = parseFloat((formData.get("claimed_amount") as string) || "0");
-  if (isNaN(claimed_amount) || claimed_amount <= 0)
-    return { error: "Claimed amount must be a positive number." };
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("progress_claims")
-    .update({
-      claimed_amount,
-      claim_date: (formData.get("claim_date") as string) || today(),
-      period_end: (formData.get("period_end") as string) || today(),
-      notes: ((formData.get("notes") as string) || "").trim() || null,
-    })
-    .eq("id", id)
-    .in("status", ["draft", "submitted"])
-    .select("project_id")
-    .single();
-  if (error)
-    return { error: `Could not update claim: ${error.message}. Only draft/submitted claims are editable.` };
-
-  revalidateFinancials(data?.project_id);
-  redirect("/progress-claims");
-}
-
-/** Cancel an approved (unpaid) claim — Director only, audited. Retained;
- *  drops from approved-claim totals and receivables. */
-export async function cancelClaim(id: string, remarks: string): Promise<{ error?: string } | void> {
-  const auth = await requireDirector();
-  if ("error" in auth) return auth;
-  const supabase = await createClient();
-  const { data: claim } = await supabase
-    .from("progress_claims")
-    .select("status, project_id")
-    .eq("id", id)
-    .single();
-  if (!claim) return { error: "Claim not found." };
-  if (claim.status === "paid") return { error: "A paid claim cannot be cancelled." };
-  if (claim.status !== "approved") return { error: "Only approved claims can be cancelled." };
-
-  const { error } = await supabase
-    .from("progress_claims")
-    .update({ status: "cancelled" })
-    .eq("id", id);
-  if (error) return { error: error.message };
-  await recordAudit("progress_claim", id, "cancelled", auth.approver, remarks);
-  revalidateFinancials(claim.project_id);
 }
 
 // ── Payments ─────────────────────────────────────────────────────────────────

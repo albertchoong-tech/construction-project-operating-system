@@ -22,10 +22,8 @@ const emptyLine: QuotationLineDraft = {
 /** Quotation line-item editor; serialises rows to a hidden items_json input.
  *  Same pattern as the PR items editor, plus a BOQ section column so
  *  conversion maps straight into boq_items. */
-export function QuotationItemsField({ initial }: { initial?: QuotationLineDraft[] }) {
-  const [items, setItems] = useState<QuotationLineDraft[]>(
-    initial?.length ? initial.map((i) => ({ ...emptyLine, ...i })) : [{ ...emptyLine }],
-  );
+export function QuotationItemsField() {
+  const [items, setItems] = useState<QuotationLineDraft[]>([{ ...emptyLine }]);
 
   function update(idx: number, patch: Partial<QuotationLineDraft>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));

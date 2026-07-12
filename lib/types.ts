@@ -111,7 +111,7 @@ export type PurchaseOrder = {
   po_no: string | null;
   issue_date: string | null;
   delivery_date: string | null;
-  status: "draft" | "approved" | "delivered" | "invoiced" | "paid" | "cancelled";
+  status: "draft" | "approved" | "delivered" | "invoiced" | "paid";
   cost_category: string | null;
   total_amount: number;
   notes: string | null;
@@ -188,7 +188,7 @@ export type VariationOrder = {
   requested_by: string | null;
   request_date: string | null;
   amount: number;
-  status: "draft" | "pending" | "approved" | "rejected" | "cancelled";
+  status: "draft" | "pending" | "approved" | "rejected";
   approved_by: string | null;
   approved_date: string | null;
   created_at: string;
@@ -203,7 +203,7 @@ export type ProgressClaim = {
   period_end: string | null;
   claimed_amount: number;
   approved_amount: number;
-  status: "draft" | "submitted" | "approved" | "paid" | "cancelled";
+  status: "draft" | "submitted" | "approved" | "paid";
   notes: string | null;
   created_at: string;
   projects?: Project | null;

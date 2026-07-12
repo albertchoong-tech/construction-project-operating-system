@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
+import { PageHeader, Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
-import { CostCentreSelect } from "@/components/cost-centre-select";
-import { actionPO, recordDelivery, cancelPO, recategorisePO } from "@/lib/actions/procurement";
+import { actionPO, recordDelivery } from "@/lib/actions/procurement";
 import { recordSupplierPayment } from "@/lib/actions/financial";
 import { costCategoryLabel } from "@/lib/categories";
 import { getSessionProfile } from "@/lib/auth";
@@ -29,9 +28,6 @@ export default async function PODetailPage({
     .single();
   if (!po) notFound();
 
-  const profile = await getSessionProfile();
-  const isDirector = profile?.role === "director";
-
   const [{ data: deliveries }, { data: payments }] = await Promise.all([
     supabase
       .from("material_deliveries")
@@ -54,34 +50,17 @@ export default async function PODetailPage({
         title={po.po_no ?? "Purchase Order"}
         subtitle={`${po.projects?.name ?? "—"} · Supplier: ${po.suppliers?.name ?? "—"}${po.purchase_requests?.pr_no ? ` · From ${po.purchase_requests.pr_no}` : ""}`}
         action={
-          <span className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-3">
             <StatusBadge status={po.status} />
             {po.status === "draft" && (
-              <>
-                <ActionButton
-                  label="Approve PO"
-                  variant="approve"
-                  promptRemarks
-                  small={false}
-                  action={async (remarks: string) => {
-                    "use server";
-                    return actionPO(id, "approved", remarks);
-                  }}
-                />
-                <LinkButton href={`/purchase-orders/${id}/edit`} variant="secondary">
-                  Edit
-                </LinkButton>
-              </>
-            )}
-            {["approved", "delivered", "invoiced"].includes(po.status) && (
               <ActionButton
-                label="Cancel PO"
-                variant="danger"
-                small={false}
+                label="Approve PO"
+                variant="approve"
                 promptRemarks
+                small={false}
                 action={async (remarks: string) => {
                   "use server";
-                  return cancelPO(id, remarks);
+                  return actionPO(id, "approved", remarks);
                 }}
               />
             )}
@@ -108,19 +87,7 @@ export default async function PODetailPage({
             <dt className="text-slate-500">Delivery due</dt>
             <dd className="text-slate-900">{fmtDate(po.delivery_date)}</dd>
             <dt className="text-slate-500">Cost centre</dt>
-            <dd className="text-slate-900">
-              {isDirector && po.status !== "cancelled" ? (
-                <CostCentreSelect
-                  current={po.cost_category ?? "material"}
-                  action={async (costCategory: string) => {
-                    "use server";
-                    return recategorisePO(id, costCategory);
-                  }}
-                />
-              ) : (
-                costCategoryLabel(po.cost_category)
-              )}
-            </dd>
+            <dd className="text-slate-900">{costCategoryLabel(po.cost_category)}</dd>
             <dt className="text-slate-500">Total amount</dt>
             <dd className="text-slate-900 font-semibold">{fmtRM(po.total_amount)}</dd>
             <dt className="text-slate-500">Paid to supplier</dt>

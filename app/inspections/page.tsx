@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
-import { PageHeader, Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
+import { PageHeader, Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { IssueCategoryField } from "@/components/issue-category-field";
 import { PhotoField } from "@/components/photo-field";
@@ -91,7 +91,7 @@ export default async function InspectionsPage() {
           {!inspections?.length ? (
             <EmptyState message="No inspections recorded yet. Add the first one above." />
           ) : (
-            <Table headers={["Date", "Project", "Area", "Result", "Issue Category", "Remarks", ""]}>
+            <Table headers={["Date", "Project", "Area", "Result", "Issue Category", "Remarks"]}>
               {(inspections as (InspectionRecord & { projects?: { name?: string } })[]).map((i) => (
                 <tr key={i.id} className="hover:bg-slate-50 align-top">
                   <Td>{fmtDate(i.inspection_date)}</Td>
@@ -112,11 +112,6 @@ export default async function InspectionsPage() {
                       : "—"}
                   </Td>
                   <Td className="whitespace-normal max-w-md">{i.remarks ?? "—"}</Td>
-                  <Td right>
-                    <LinkButton href={`/inspections/${i.id}/edit`} variant="secondary">
-                      Edit
-                    </LinkButton>
-                  </Td>
                 </tr>
               ))}
             </Table>

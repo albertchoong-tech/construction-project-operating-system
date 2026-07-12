@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
+import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { ApproveClaimButton } from "@/components/approve-claim-button";
@@ -8,7 +8,6 @@ import {
   approveClaim,
   rejectClaim,
   deleteClaim,
-  cancelClaim,
   recordCustomerPayment,
 } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, fmtPct, today } from "@/lib/format";
@@ -93,9 +92,6 @@ export async function ClaimsTab({
                             }}
                           />
                         )}
-                        <LinkButton href={`/progress-claims/${c.id}/edit`} variant="secondary">
-                          Edit
-                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"
@@ -103,17 +99,6 @@ export async function ClaimsTab({
                           action={deleteClaim.bind(null, c.id)}
                         />
                       </>
-                    )}
-                    {c.status === "approved" && (
-                      <ActionButton
-                        label="Cancel"
-                        variant="danger"
-                        promptRemarks
-                        action={async (remarks: string) => {
-                          "use server";
-                          return cancelClaim(c.id, remarks);
-                        }}
-                      />
                     )}
                   </span>
                 </Td>
