@@ -7,8 +7,10 @@ import type { PRItem } from "@/lib/types";
 const emptyItem: PRItem = { description: "", unit: "", qty: 0, est_rate: 0 };
 
 /** Dynamic line-item editor; serialises rows to a hidden items_json input. */
-export function PRItemsField() {
-  const [items, setItems] = useState<PRItem[]>([{ ...emptyItem }]);
+export function PRItemsField({ initial }: { initial?: PRItem[] }) {
+  const [items, setItems] = useState<PRItem[]>(
+    initial?.length ? initial.map((i) => ({ ...emptyItem, ...i })) : [{ ...emptyItem }],
+  );
 
   function update(idx: number, patch: Partial<PRItem>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));

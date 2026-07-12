@@ -49,12 +49,17 @@ export default async function QuotationDetailPage({
               <StatusBadge status={quotation.status} />
               <PrintButton />
               {quotation.status === "draft" && (
-                <ActionButton
-                  label="Submit for Approval"
-                  variant="primary"
-                  small={false}
-                  action={submitQuotation.bind(null, id)}
-                />
+                <>
+                  <ActionButton
+                    label="Submit for Approval"
+                    variant="primary"
+                    small={false}
+                    action={submitQuotation.bind(null, id)}
+                  />
+                  <LinkButton href={`/quotations/${id}/edit`} variant="secondary">
+                    Edit
+                  </LinkButton>
+                </>
               )}
               {quotation.status === "submitted" && (
                 <>

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
 import { ActionButton } from "@/components/action-button";
 import { ApproveClaimButton } from "@/components/approve-claim-button";
-import { approveClaim, rejectClaim, deleteClaim } from "@/lib/actions/financial";
+import { approveClaim, rejectClaim, deleteClaim, cancelClaim } from "@/lib/actions/financial";
 import { fmtDate, fmtRM } from "@/lib/format";
 import type { ProgressClaim } from "@/lib/types";
 import Link from "next/link";
@@ -82,6 +82,9 @@ export default async function ProgressClaimsPage() {
                             }}
                           />
                         )}
+                        <LinkButton href={`/progress-claims/${c.id}/edit`} variant="secondary">
+                          Edit
+                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"
@@ -91,9 +94,20 @@ export default async function ProgressClaimsPage() {
                       </>
                     )}
                     {c.status === "approved" && (
-                      <LinkButton href={`/projects/${c.project_id}?tab=claims`} variant="secondary">
-                        Record payment →
-                      </LinkButton>
+                      <>
+                        <LinkButton href={`/projects/${c.project_id}?tab=claims`} variant="secondary">
+                          Record payment →
+                        </LinkButton>
+                        <ActionButton
+                          label="Cancel"
+                          variant="danger"
+                          promptRemarks
+                          action={async (remarks: string) => {
+                            "use server";
+                            return cancelClaim(c.id, remarks);
+                          }}
+                        />
+                      </>
                     )}
                   </span>
                 </Td>

@@ -72,6 +72,9 @@ export default async function PurchaseOrdersPage() {
                             return actionPO(po.id, "approved", remarks);
                           }}
                         />
+                        <LinkButton href={`/purchase-orders/${po.id}/edit`} variant="secondary">
+                          Edit
+                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"

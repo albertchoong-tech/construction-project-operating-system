@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
-import { PageHeader, Card, Table, Td, EmptyState } from "@/components/ui";
+import { PageHeader, Card, Table, Td, EmptyState, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { PhotoField } from "@/components/photo-field";
 import { addProgressLog } from "@/lib/actions/site";
@@ -89,7 +89,7 @@ export default async function SiteProgressPage() {
             <EmptyState message="No site progress logged yet. Add the first log above." />
           ) : (
             <Table
-              headers={["Date", "Project", "Work Done", "Completion", "Workers", "Weather", "Issues"]}
+              headers={["Date", "Project", "Work Done", "Completion", "Workers", "Weather", "Issues", ""]}
               rightAlign={[3, 4]}
             >
               {(logs as SiteProgressLog[]).map((log) => (
@@ -106,6 +106,11 @@ export default async function SiteProgressPage() {
                   <Td>{log.weather ?? "—"}</Td>
                   <Td className="whitespace-normal max-w-xs">
                     {log.issues ? <span className="text-amber-700">{log.issues}</span> : "—"}
+                  </Td>
+                  <Td right>
+                    <LinkButton href={`/site-progress/${log.id}/edit`} variant="secondary">
+                      Edit
+                    </LinkButton>
                   </Td>
                 </tr>
               ))}

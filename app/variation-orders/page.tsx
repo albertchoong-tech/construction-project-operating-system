@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
+import { PageHeader, Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { FileField } from "@/components/attachments";
-import { createVO, actionVO, deleteVO } from "@/lib/actions/financial";
+import { createVO, actionVO, deleteVO, cancelVO } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, today } from "@/lib/format";
 import type { VariationOrder } from "@/lib/types";
 import Link from "next/link";
@@ -84,6 +84,9 @@ export default async function VariationOrdersPage() {
                               return actionVO(vo.id, "rejected", remarks);
                             }}
                           />
+                          <LinkButton href={`/variation-orders/${vo.id}/edit`} variant="secondary">
+                            Edit
+                          </LinkButton>
                           <ActionButton
                             label="Delete"
                             variant="danger"
@@ -91,6 +94,17 @@ export default async function VariationOrdersPage() {
                             action={deleteVO.bind(null, vo.id)}
                           />
                         </>
+                      )}
+                      {vo.status === "approved" && (
+                        <ActionButton
+                          label="Cancel VO"
+                          variant="danger"
+                          promptRemarks
+                          action={async (remarks: string) => {
+                            "use server";
+                            return cancelVO(vo.id, remarks);
+                          }}
+                        />
                       )}
                     </span>
                   </Td>
