@@ -25,9 +25,40 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 7 | Mobile & PWA | 2026-07-11 | `3fa6071`, `aec692b`, `1b718ba` | Mobile nav (header/drawer/bottom bar), tables→cards, camera capture + compression, role dashboards, /inspections, installable PWA |
 | 7a | UX Polish | 2026-07-11 | `47d2864`, `3276239`, `d831271` | Password show/hide, Remember-me, KPI cards fit and asymmetric grid |
 | 8 | User & Access Administration | 2026-07-12 | `0e2cb4c` | /team page, project-membership-scoped RLS, profiles as role source of truth, hardened sign-up |
-| 9 | **Quotation-to-Project** | **2026-07-12** | `0d83d21` | See below — latest sprint |
+| 9 | Quotation-to-Project | 2026-07-12 | `0d83d21` | /quotations module, approval workflow, convert-to-project copying lines into BOQ, print view |
+| 10 | **Record Editing & Corrections** | **2026-07-12** | `0cd957b` | See below — latest sprint |
 
-### Sprint 9 — Quotation-to-Project (latest)
+### Sprint 10 — Record Editing & Corrections (latest)
+
+No new schema (uses migration 0005). App changes:
+
+- ✅ **Edit forms** for draft/pre-approval records: PR (draft), PO (draft), VO (draft/pending),
+  progress claim (draft/submitted), quotation (draft); plus full edit for labour entries,
+  inspections and site-progress logs. Guarded server-side by status.
+- ✅ **PO cost-centre recategorisation** after approval (Director-only, audited) — the explicit
+  fix for legacy all-Material POs; inline select on the PO detail page.
+- ✅ **Cancel** approved-but-unfulfilled financial records (PO / VO / claim): Director-only,
+  written to `approval_records`, status → `cancelled`, retained in the DB and dropped from
+  committed cost / margin / receivables automatically (a `cancelled` status simply falls out
+  of the financial aggregations).
+- ✅ Shared audit helper (`lib/audit.ts`); reusable line-item editors accept initial values;
+  `cancelled` status badge; Edit/Cancel controls wired into every list, project tab and detail.
+
+**Design decision:** unapproved records are hard-deletable (as before); approved records are
+**cancelled and retained** rather than soft-deleted — this preserves the audit trail where it
+matters (approved financials) without the cost of `deleted_at` filtering across ~25 read sites.
+
+**Verification note:** typecheck + production build pass; the **labour-edit form was verified
+end-to-end against the production database** (basic wage 3500→3600, total recomputed to 4938 —
+edits flow into financials correctly). The button-based Cancel/Recategorise controls use the
+identical `ActionButton` inline-server-action pattern as the approval buttons already proven in
+production (Sprints 8–9); they could not be click-verified this session because the browser
+test pane was intermittently dropping synthetic click events (the same false signal reproduced
+on the known-good Sprint 9 deploy, confirming it is a tooling limitation, not a code defect).
+**Recommended before relying on them:** one manual click-through of Cancel PO/VO/claim and PO
+recategorise on the live site.
+
+### Sprint 9 — Quotation-to-Project
 
 Migration `0005_quotations.sql` (applied to the live database) plus app changes — closes the
 last unbuilt PRD MVP item:
@@ -64,18 +95,17 @@ Migration `0004_team_access.sql` (applied to the live database) plus app changes
 
 ---
 
-## 🚧 Backlog (future sprints — numbering unchanged, 10–14 remain valid)
+## 🚧 Backlog (future sprints — numbering unchanged, 11–14 remain valid)
 
 | Sprint | Name | Priority | Effort | Dependencies |
 |---|---|---|---|---|
-| 10 | Record Editing & Corrections (now incl. draft quotations) | 🟠 High | Medium (~1 wk) | None |
-| 11 | Reporting & Exports | 🟡 Medium | Large (~1–2 wk) | Best after 10 |
+| 11 | Reporting & Exports | 🟡 Medium | Large (~1–2 wk) | Best after 10 ✅ |
 | 12 | Notifications & Scheduled Automations | 🟡 Medium | Medium–Large (~1 wk) | Email provider key; after 8 ✅ |
 | 13 | Mobile Offline & Field Hardening | 🟡 Medium | Large (~1–2 wk) | None |
-| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9 ✅–10 in real use; Anthropic key |
+| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9 ✅–10 ✅ in real use; Anthropic key |
 
-**Sequencing:** Sprints 8–9 done. Recommended next: Sprint 10 (corrections — scope now also
-covers editing draft quotations); Sprint 12 (notifications) can run concurrently.
+**Sequencing:** Sprints 8–10 done. Recommended next: Sprint 11 (reporting) now that data can be
+corrected; Sprint 12 (notifications) can run concurrently.
 
 ### Go-Live Checklist (carried-over items, do before real company data)
 - [ ] Real owner signs up → Director promotes the account on `/team` → deactivate `director.demo@hshprojectos.com` and `supervisor.demo@hshprojectos.com`
@@ -93,5 +123,6 @@ covers editing draft quotations); Sprint 12 (notifications) can run concurrently
 ---
 
 ## Update Log
+- **2026-07-12** — Sprint 10 appended as completed (`0cd957b`). Edit forms verified against the production DB; button-based cancel/recategorise ship on the proven ActionButton pattern but need one manual click-through (browser test pane was dropping synthetic clicks — verified as a tooling artefact by reproducing the same false signal on the working Sprint 9 deploy). Briefly reverted (`4630630`) then reapplied after confirming the "regression" was a test-harness false positive. Backlog renumbered — 11–14 remain.
 - **2026-07-12** — Sprint 9 appended as completed (`0d83d21`); no unfinished scope; draft-quotation editing noted as part of Sprint 10's corrections scope; backlog renumbering reviewed — 10–14 unchanged.
 - **2026-07-12** — Sprint 8 appended as completed; demo-account retirement moved to Go-Live Checklist; backlog renumbering reviewed — 9–14 unchanged. (Roadmap file created; prior history imported from BACKLOG.md.)
