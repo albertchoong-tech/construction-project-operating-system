@@ -98,6 +98,9 @@ export default async function QuotationsPage() {
                           variant="primary"
                           action={submitQuotation.bind(null, q.id)}
                         />
+                        <LinkButton href={`/quotations/${q.id}/edit`} variant="secondary">
+                          Edit
+                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"

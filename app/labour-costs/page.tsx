@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, Table, Td, EmptyState, StatCard } from "@/components/ui";
+import { PageHeader, Card, Table, Td, EmptyState, StatCard, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { addLabourCost, deleteLabourCost } from "@/lib/actions/labour";
@@ -177,12 +177,17 @@ export default async function LabourCostsPage() {
                     {fmtRM(r.total_cost)}
                   </Td>
                   <Td right>
-                    <ActionButton
-                      label="Delete"
-                      variant="danger"
-                      confirmMessage={`Delete labour entry for ${r.worker_name}?`}
-                      action={deleteLabourCost.bind(null, r.id, r.project_id)}
-                    />
+                    <span className="flex justify-end gap-1.5">
+                      <LinkButton href={`/labour-costs/${r.id}/edit`} variant="secondary">
+                        Edit
+                      </LinkButton>
+                      <ActionButton
+                        label="Delete"
+                        variant="danger"
+                        confirmMessage={`Delete labour entry for ${r.worker_name}?`}
+                        action={deleteLabourCost.bind(null, r.id, r.project_id)}
+                      />
+                    </span>
                   </Td>
                 </tr>
               ))}

@@ -93,6 +93,74 @@ export async function createQuotation(
   redirect(`/quotations/${quotation.id}`);
 }
 
+/** Edit a still-draft quotation, replacing all line items. */
+export async function updateQuotation(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const id = (formData.get("id") as string) || "";
+  const client_id = (formData.get("client_id") as string) || "";
+  const title = ((formData.get("title") as string) || "").trim();
+  if (!id) return { error: "Missing quotation." };
+  if (!client_id) return { error: "Client is required." };
+  if (!title) return { error: "Job / project title is required." };
+
+  let items: QuotationLineDraft[];
+  try {
+    items = JSON.parse((formData.get("items_json") as string) || "[]");
+  } catch {
+    return { error: "Invalid line items." };
+  }
+  items = items.filter((i) => i.description?.trim());
+  if (!items.length) return { error: "Add at least one line item with a description." };
+
+  const total_amount = items.reduce(
+    (a, i) => a + (Number(i.quantity) || 0) * (Number(i.unit_rate) || 0),
+    0,
+  );
+
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("quotations")
+    .select("status")
+    .eq("id", id)
+    .single();
+  if (!existing) return { error: "Quotation not found." };
+  if (existing.status !== "draft")
+    return { error: "Only draft quotations can be edited." };
+
+  const { error } = await supabase
+    .from("quotations")
+    .update({
+      client_id,
+      title,
+      valid_until: ((formData.get("valid_until") as string) || "").trim() || null,
+      issue_date: (formData.get("issue_date") as string) || today(),
+      total_amount,
+      notes: ((formData.get("notes") as string) || "").trim() || null,
+    })
+    .eq("id", id)
+    .eq("status", "draft");
+  if (error) return { error: `Could not update quotation: ${error.message}` };
+
+  // Replace line items
+  await supabase.from("quotation_items").delete().eq("quotation_id", id);
+  const { error: itemsError } = await supabase.from("quotation_items").insert(
+    items.map((i) => ({
+      quotation_id: id,
+      section: i.section?.trim() || null,
+      description: i.description.trim(),
+      unit: i.unit?.trim() || null,
+      quantity: Number(i.quantity) || 0,
+      unit_rate: Number(i.unit_rate) || 0,
+    })),
+  );
+  if (itemsError) return { error: `Quotation saved but lines failed: ${itemsError.message}` };
+
+  revalidateQuotations();
+  redirect(`/quotations/${id}`);
+}
+
 export async function submitQuotation(id: string): Promise<{ error?: string } | void> {
   const supabase = await createClient();
   const { error } = await supabase

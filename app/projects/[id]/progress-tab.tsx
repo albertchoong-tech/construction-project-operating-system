@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
-import { Card, Table, Td, EmptyState } from "@/components/ui";
+import { Card, Table, Td, EmptyState, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { AttachmentChips, groupByEntity } from "@/components/attachments";
@@ -93,12 +93,17 @@ export async function ProgressTab({ projectId }: { projectId: string }) {
                   {log.issues ? <span className="text-amber-700">{log.issues}</span> : "—"}
                 </Td>
                 <Td right>
-                  <ActionButton
-                    label="Delete"
-                    variant="danger"
-                    confirmMessage="Delete this progress log?"
-                    action={deleteProgressLog.bind(null, log.id, projectId)}
-                  />
+                  <span className="flex justify-end gap-1.5">
+                    <LinkButton href={`/site-progress/${log.id}/edit`} variant="secondary">
+                      Edit
+                    </LinkButton>
+                    <ActionButton
+                      label="Delete"
+                      variant="danger"
+                      confirmMessage="Delete this progress log?"
+                      action={deleteProgressLog.bind(null, log.id, projectId)}
+                    />
+                  </span>
                 </Td>
               </tr>
             ))}

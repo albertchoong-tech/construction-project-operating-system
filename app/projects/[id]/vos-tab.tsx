@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
+import { Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { FileField, AttachmentChips, groupByEntity } from "@/components/attachments";
-import { createVO, actionVO, deleteVO } from "@/lib/actions/financial";
+import { createVO, actionVO, deleteVO, cancelVO } from "@/lib/actions/financial";
 import { fmtDate, fmtRM, today } from "@/lib/format";
 import type { ProjectDocument, VariationOrder } from "@/lib/types";
 
@@ -93,6 +93,9 @@ export async function VosTab({ projectId }: { projectId: string }) {
                             return actionVO(vo.id, "rejected", remarks);
                           }}
                         />
+                        <LinkButton href={`/variation-orders/${vo.id}/edit`} variant="secondary">
+                          Edit
+                        </LinkButton>
                         <ActionButton
                           label="Delete"
                           variant="danger"
@@ -100,6 +103,17 @@ export async function VosTab({ projectId }: { projectId: string }) {
                           action={deleteVO.bind(null, vo.id)}
                         />
                       </>
+                    )}
+                    {vo.status === "approved" && (
+                      <ActionButton
+                        label="Cancel VO"
+                        variant="danger"
+                        promptRemarks
+                        action={async (remarks: string) => {
+                          "use server";
+                          return cancelVO(vo.id, remarks);
+                        }}
+                      />
                     )}
                   </span>
                 </Td>

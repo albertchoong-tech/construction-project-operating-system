@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { uploadAttachments } from "@/lib/attachments";
 import { today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
+
+const INSPECTION_RESULTS = ["pass", "fail", "conditional"];
 
 export async function addProgressLog(
   _prev: ActionResult,
@@ -83,6 +86,58 @@ export async function deleteProgressLog(
   revalidatePath(`/projects/${projectId}`);
 }
 
+export async function updateProgressLog(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const id = (formData.get("id") as string) || "";
+  if (!id) return { error: "Missing log." };
+  const work_done = ((formData.get("work_done") as string) || "").trim();
+  if (!work_done) return { error: "Describe the work done." };
+  const completion_pct = parseFloat((formData.get("completion_pct") as string) || "0");
+  if (isNaN(completion_pct) || completion_pct < 0 || completion_pct > 100)
+    return { error: "Completion % must be between 0 and 100." };
+  const workers_count = parseInt((formData.get("workers_count") as string) || "0", 10);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_progress_logs")
+    .update({
+      log_date: (formData.get("log_date") as string) || today(),
+      reported_by: ((formData.get("reported_by") as string) || "").trim() || null,
+      work_done,
+      completion_pct,
+      weather: ((formData.get("weather") as string) || "").trim() || null,
+      workers_count: isNaN(workers_count) ? 0 : workers_count,
+      issues: ((formData.get("issues") as string) || "").trim() || null,
+    })
+    .eq("id", id)
+    .select("project_id")
+    .single();
+  if (error) return { error: `Could not update log: ${error.message}` };
+
+  // Re-sync the project's surfaced completion % to the latest log
+  if (data?.project_id) {
+    const { data: latest } = await supabase
+      .from("site_progress_logs")
+      .select("completion_pct")
+      .eq("project_id", data.project_id)
+      .order("log_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+    if (latest)
+      await supabase
+        .from("projects")
+        .update({ completion_pct: latest.completion_pct })
+        .eq("id", data.project_id);
+    revalidatePath(`/projects/${data.project_id}`);
+  }
+  revalidatePath("/site-progress");
+  revalidatePath("/");
+  redirect("/site-progress");
+}
+
 export async function addInspection(
   _prev: ActionResult,
   formData: FormData,
@@ -137,4 +192,50 @@ export async function deleteInspection(
   const { error } = await supabase.from("inspection_records").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath(`/projects/${projectId}`);
+}
+
+export async function updateInspection(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const id = (formData.get("id") as string) || "";
+  if (!id) return { error: "Missing inspection." };
+  const result = (formData.get("result") as string) || "pass";
+  if (!INSPECTION_RESULTS.includes(result)) return { error: "Invalid inspection result." };
+
+  const issue_category = ((formData.get("issue_category") as string) || "").trim() || null;
+  const issue_detail = ((formData.get("issue_detail") as string) || "").trim() || null;
+  if (issue_category === "Others" && !issue_detail)
+    return { error: 'Please specify the issue when category is "Others".' };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inspection_records")
+    .update({
+      inspection_date: (formData.get("inspection_date") as string) || today(),
+      inspector: ((formData.get("inspector") as string) || "").trim() || null,
+      area: ((formData.get("area") as string) || "").trim() || null,
+      result,
+      issue_category,
+      issue_detail: issue_category === "Others" ? issue_detail : null,
+      remarks: ((formData.get("remarks") as string) || "").trim() || null,
+    })
+    .eq("id", id)
+    .select("project_id")
+    .single();
+  if (error) return { error: `Could not update inspection: ${error.message}` };
+
+  const uploadError = await uploadAttachments(
+    formData,
+    data.project_id,
+    "inspection_record",
+    id,
+    "Inspection Photo",
+  );
+  if (uploadError) return { error: uploadError };
+
+  revalidatePath(`/projects/${data.project_id}`);
+  revalidatePath("/inspections");
+  revalidatePath("/");
+  redirect(`/projects/${data.project_id}?tab=inspections`);
 }

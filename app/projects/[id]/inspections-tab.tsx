@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
-import { Card, Table, Td, EmptyState, StatusBadge } from "@/components/ui";
+import { Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { IssueCategoryField } from "@/components/issue-category-field";
@@ -70,12 +70,17 @@ export async function InspectionsTab({ projectId }: { projectId: string }) {
                   />
                 </Td>
                 <Td right>
-                  <ActionButton
-                    label="Delete"
-                    variant="danger"
-                    confirmMessage="Delete this inspection record?"
-                    action={deleteInspection.bind(null, i.id, projectId)}
-                  />
+                  <span className="flex justify-end gap-1.5">
+                    <LinkButton href={`/inspections/${i.id}/edit`} variant="secondary">
+                      Edit
+                    </LinkButton>
+                    <ActionButton
+                      label="Delete"
+                      variant="danger"
+                      confirmMessage="Delete this inspection record?"
+                      action={deleteInspection.bind(null, i.id, projectId)}
+                    />
+                  </span>
                 </Td>
               </tr>
             ))}
