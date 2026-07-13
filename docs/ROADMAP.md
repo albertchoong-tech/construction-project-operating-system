@@ -26,7 +26,26 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 7a | UX Polish | 2026-07-11 | `47d2864`, `3276239`, `d831271` | Password show/hide, Remember-me, KPI cards fit and asymmetric grid |
 | 8 | User & Access Administration | 2026-07-12 | `0e2cb4c` | /team page, project-membership-scoped RLS, profiles as role source of truth, hardened sign-up |
 | 9 | Quotation-to-Project | 2026-07-12 | `0d83d21` | /quotations module, approval workflow, convert-to-project copying lines into BOQ, print view |
-| 10 | **Record Editing & Corrections** | **2026-07-12** | `0cd957b` | See below — latest sprint |
+| 10 | Record Editing & Corrections | 2026-07-12 | `0cd957b` | Edit forms for draft records; PO cost-centre recategorise; cancel approved PO/VO/claim (audited, retained) |
+| 11 | **Reporting & Exports** | **2026-07-12** | `3b5fbac` | See below — latest sprint |
+
+### Sprint 11 — Reporting & Exports (latest)
+
+Migration `0006` (`budgets.cost_category`, applied live) plus:
+
+- ✅ `/reports` hub (Director + Finance): company reports and per-project cost reports/exports
+- ✅ **Monthly financial report** (printable): money in/out, net cash movement, claims
+  raised/certified, outstanding receivables/payables snapshot, month navigation
+- ✅ **Project cost report** (printable): committed/actual/budget by cost centre with variance
+  and share, labour breakdown, contract/margin/completion summary
+- ✅ **CSV exports** via role-gated API routes (RLS + 403 otherwise): `/api/reports/labour`,
+  `/api/reports/payments` (date range), `/api/reports/project-cost`
+- ✅ Client-ready **progress-claim payment certificate** (printable); claim numbers link to it
+- ✅ Print button on PO detail; cost-centre picker on the budget form (drives budget-vs-actual)
+- ✅ Verified on production via reliable methods (server-rendered content + CSV fetch + REST):
+  reports hub renders; labour/payments/project-cost CSVs return correct data (Material 11,500 +
+  Labour 4,938); April-2024 monthly report shows Money In 120,000 / Certified 85,000 /
+  Receivables 107,975; PC-2026-003 certificate shows Certified 42,000 / Balance 0.
 
 ### Sprint 10 — Record Editing & Corrections (latest)
 
@@ -95,17 +114,16 @@ Migration `0004_team_access.sql` (applied to the live database) plus app changes
 
 ---
 
-## 🚧 Backlog (future sprints — numbering unchanged, 11–14 remain valid)
+## 🚧 Backlog (future sprints — numbering unchanged, 12–14 remain valid)
 
 | Sprint | Name | Priority | Effort | Dependencies |
 |---|---|---|---|---|
-| 11 | Reporting & Exports | 🟡 Medium | Large (~1–2 wk) | Best after 10 ✅ |
 | 12 | Notifications & Scheduled Automations | 🟡 Medium | Medium–Large (~1 wk) | Email provider key; after 8 ✅ |
 | 13 | Mobile Offline & Field Hardening | 🟡 Medium | Large (~1–2 wk) | None |
-| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9 ✅–10 ✅ in real use; Anthropic key |
+| 14 | Intelligence Layer | 🟢 Low | Large (~1–2 wk) | 9 ✅–11 ✅ in real use; Anthropic key |
 
-**Sequencing:** Sprints 8–10 done. Recommended next: Sprint 11 (reporting) now that data can be
-corrected; Sprint 12 (notifications) can run concurrently.
+**Sequencing:** Sprints 8–11 done. Recommended next: Sprint 12 (notifications) — needs an email
+provider API key in Vercel env; Sprint 13 (mobile offline) can run concurrently.
 
 ### Go-Live Checklist (carried-over items, do before real company data)
 - [ ] Real owner signs up → Director promotes the account on `/team` → deactivate `director.demo@hshprojectos.com` and `supervisor.demo@hshprojectos.com`
@@ -123,6 +141,7 @@ corrected; Sprint 12 (notifications) can run concurrently.
 ---
 
 ## Update Log
+- **2026-07-12** — Sprint 11 appended as completed (`3b5fbac`). Verified on production via reliable methods (server-rendered report content + CSV `fetch` + REST ground truth) rather than synthetic clicks — reports and exports confirmed with correct figures. Backlog renumbered — 12–14 remain.
 - **2026-07-12** — Sprint 10 appended as completed (`0cd957b`). Edit forms verified against the production DB; button-based cancel/recategorise ship on the proven ActionButton pattern but need one manual click-through (browser test pane was dropping synthetic clicks — verified as a tooling artefact by reproducing the same false signal on the working Sprint 9 deploy). Briefly reverted (`4630630`) then reapplied after confirming the "regression" was a test-harness false positive. Backlog renumbered — 11–14 remain.
 - **2026-07-12** — Sprint 9 appended as completed (`0d83d21`); no unfinished scope; draft-quotation editing noted as part of Sprint 10's corrections scope; backlog renumbering reviewed — 10–14 unchanged.
 - **2026-07-12** — Sprint 8 appended as completed; demo-account retirement moved to Go-Live Checklist; backlog renumbering reviewed — 9–14 unchanged. (Roadmap file created; prior history imported from BACKLOG.md.)
