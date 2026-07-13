@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card, Table, Td, EmptyState, StatusBadge, LinkButton } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
+import { PrintButton } from "@/components/print-button";
 import { CostCentreSelect } from "@/components/cost-centre-select";
 import { actionPO, recordDelivery, cancelPO, recategorisePO } from "@/lib/actions/procurement";
 import { recordSupplierPayment } from "@/lib/actions/financial";
@@ -56,6 +57,7 @@ export default async function PODetailPage({
         action={
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={po.status} />
+            <PrintButton />
             {po.status === "draft" && (
               <>
                 <ActionButton

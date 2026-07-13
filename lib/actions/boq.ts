@@ -55,10 +55,18 @@ export async function addBudget(
   if (isNaN(budgeted_amount) || budgeted_amount < 0)
     return { error: "Budgeted amount must be a non-negative number." };
 
+  const VALID_COST_CATEGORIES = [
+    "material", "labour", "subcontractor", "plant_equipment",
+    "transport", "permit_statutory", "site_office", "miscellaneous",
+  ];
+  const ccRaw = ((formData.get("cost_category") as string) || "").trim();
+  const cost_category = VALID_COST_CATEGORIES.includes(ccRaw) ? ccRaw : null;
+
   const supabase = await createClient();
   const { error } = await supabase.from("budgets").insert({
     project_id,
     category,
+    cost_category,
     budgeted_amount,
     actual_amount: isNaN(actual_amount) ? 0 : actual_amount,
   });

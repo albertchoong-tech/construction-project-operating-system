@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, Table, Td, EmptyState } from "@/components/ui";
-import { ActionForm, Field, TextInput } from "@/components/form";
+import { ActionForm, Field, TextInput, Select } from "@/components/form";
 import { ActionButton } from "@/components/action-button";
 import { addBudget, deleteBudget } from "@/lib/actions/boq";
 import { COST_CATEGORIES } from "@/lib/categories";
@@ -125,9 +125,17 @@ export async function BudgetTab({
       <Card title="Add Budget Category">
         <ActionForm action={addBudget} submitLabel="Add Category">
           <input type="hidden" name="project_id" value={projectId} />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <Field label="Category" required>
               <TextInput name="category" required placeholder="e.g. Materials" />
+            </Field>
+            <Field label="Cost centre (for reports)">
+              <Select name="cost_category" defaultValue="">
+                <option value="">— None —</option>
+                {COST_CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>{c.label}</option>
+                ))}
+              </Select>
             </Field>
             <Field label="Budgeted amount (RM)">
               <TextInput name="budgeted_amount" type="number" step="0.01" min="0" placeholder="0.00" />

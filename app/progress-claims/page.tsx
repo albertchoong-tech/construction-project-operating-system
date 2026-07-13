@@ -47,7 +47,11 @@ export default async function ProgressClaimsPage() {
           >
             {(claims as ProgressClaim[]).map((c) => (
               <tr key={c.id} className="hover:bg-slate-50 align-top">
-                <Td className="font-medium">{c.claim_no}</Td>
+                <Td className="font-medium">
+                  <Link href={`/progress-claims/${c.id}`} className="text-slate-900 hover:underline">
+                    {c.claim_no}
+                  </Link>
+                </Td>
                 <Td>
                   <Link href={`/projects/${c.project_id}?tab=claims`} className="hover:underline">
                     {c.projects?.name ?? "—"}

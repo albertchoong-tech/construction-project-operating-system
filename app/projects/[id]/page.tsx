@@ -90,6 +90,9 @@ export default async function ProjectDetailPage({
           <span className="flex items-center gap-3">
             <HealthBadge health={health} />
             <StatusBadge status={project.status} />
+            <LinkButton href={`/reports/project/${id}`} variant="secondary">
+              Cost report
+            </LinkButton>
             <LinkButton href={`/projects/${id}/edit`} variant="secondary">
               Edit
             </LinkButton>
