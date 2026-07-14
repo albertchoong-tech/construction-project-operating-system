@@ -174,6 +174,12 @@ provider API key in Vercel env; Sprint 13 (mobile offline) can run concurrently.
 ---
 
 ## Update Log
+- **2026-07-14** — v1.3.2 (`feature/e2e-smoke` → develop → main): **Playwright E2E smoke-test
+  framework** (`e2e/`, `playwright.config.ts`) — 16 read-only tests across auth, dashboard,
+  projects, PRs, POs, site progress, inspections, VOs, claims, payments, labour, reports. Wired
+  into GitHub Actions (`e2e` job, needs `verify`) so every push/PR to main/develop runs them
+  before deploy; the job skips until `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  / `E2E_PASSWORD` repo secrets are set. Testing is now a permanent safety net, not a manual step.
 - **2026-07-14** — v1.3.1 (`feature/action-button-modal` → develop → main): `ActionButton` now
   uses an in-app confirm/remarks modal instead of native `prompt()`/`confirm()`. Shipped via the
   new git-flow (first feature branch through the Sprint 11.5 process). Also corrected the Sprint 10

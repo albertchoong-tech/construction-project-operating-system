@@ -10,6 +10,22 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.2] — 2026-07-14 — E2E smoke-test safety net
+Branch `feature/e2e-smoke`
+### Added
+- **Playwright end-to-end test framework** (`e2e/`, `playwright.config.ts`) designed to grow
+  with the project: a one-time login fixture (cached `storageState`), shared `gotoModule`
+  helper, and one spec per business area.
+- **16 read-only smoke tests** across authentication, dashboard, projects (+ detail),
+  purchase requests, purchase orders (+ detail), site progress, inspections, variation orders,
+  progress claims (+ certificate), payments, labour costs and reports (+ CSV export API).
+- **CI gate**: GitHub Actions now runs the suite on every push/PR to `main`/`develop` after
+  typecheck/build. The job skips cleanly until three repo secrets are set
+  (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `E2E_PASSWORD`).
+### Notes
+- Smoke tests are read-only (safe against the shared DB). Write-path E2E (create/approve/cancel)
+  awaits an isolated test database — see `e2e/README.md` and `docs/RELEASE.md` §2.
+
 ## [1.3.1] — 2026-07-14 — In-app confirm/remarks modal
 Branch `feature/action-button-modal`
 ### Changed

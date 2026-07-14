@@ -1,7 +1,8 @@
 name: CI
 
 # Pre-merge quality gate. Vercel still runs the real production build on deploy;
-# this catches type + build regressions on the PR before it reaches main.
+# this catches type + build regressions and runs the E2E smoke suite on the PR
+# before it reaches main.
 on:
   push:
     branches: [main, develop]
@@ -44,3 +45,74 @@ jobs:
       - name: Lint
         continue-on-error: true
         run: npm run lint
+
+  e2e:
+    needs: verify
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_EMAIL: ${{ vars.E2E_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Skip (don't fail) until the repo secrets are configured, so E2E never
+      # blocks merges before it's set up. Add NEXT_PUBLIC_SUPABASE_URL,
+      # NEXT_PUBLIC_SUPABASE_ANON_KEY and E2E_PASSWORD to enable it.
+      - name: Check E2E secrets
+        id: gate
+        run: |
+          if [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] && [ -n "$E2E_PASSWORD" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::E2E smoke tests skipped — set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and E2E_PASSWORD repository secrets to enable them."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm ci
+
+      - name: Resolve Playwright version
+        id: pw
+        if: steps.gate.outputs.enabled == 'true'
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright browser + deps
+        if: steps.gate.outputs.enabled == 'true' && steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.gate.outputs.enabled == 'true' && steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Build app
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm run build
+
+      - name: Run E2E smoke tests
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ steps.gate.outputs.enabled == 'true' && !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
