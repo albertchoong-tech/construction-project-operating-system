@@ -168,7 +168,8 @@ Do all of this **before** the first real company data is entered.
 **Current pipeline.**
 - **CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on PRs and pushes to `main`/`develop`:
   - `verify` job: `npm ci` → **typecheck** (required gate) → **build** (informational,
-    placeholder public env) → **lint** (informational). Node pinned via `.nvmrc` (20).
+    placeholder public env) → **lint** (required gate — ESLint flat config,
+    `--max-warnings 0`). Node pinned via `.nvmrc` (20).
   - `e2e` job (needs `verify`): builds the app and runs the **Playwright smoke suite**
     (`e2e/`, 16 read-only tests across the core workflows). It **skips itself** until the repo
     secrets `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `E2E_PASSWORD` are set,
@@ -182,8 +183,8 @@ Do all of this **before** the first real company data is entered.
 2. **Promote `build` to a required gate**: add `NEXT_PUBLIC_SUPABASE_URL` and
    `NEXT_PUBLIC_SUPABASE_ANON_KEY` (both public) as GitHub Actions repository secrets, switch the
    Build step to use them, remove its `continue-on-error`, and add it to branch protection.
-3. **Fix lint to green** then make it required too — until then it stays informational so CI
-   isn't spuriously red.
+3. **Lint is a required, zero-warning gate** (`eslint.config.mjs`, `--max-warnings 0`). Keep it
+   green; new warnings fail CI by design.
 4. **Preview env**: ensure Vercel Preview deployments point at a **non-production** Supabase project
    once environments are split, so preview traffic never mutates production data.
 5. Optional: add a migrations check / `supabase db diff` step so schema drift is caught in CI.

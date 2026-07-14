@@ -4,7 +4,7 @@ import { ActionForm, Field, TextInput, TextArea, Select } from "@/components/for
 import { ActionButton } from "@/components/action-button";
 import { FileField } from "@/components/attachments";
 import { createVO, actionVO, deleteVO, cancelVO } from "@/lib/actions/financial";
-import { fmtDate, fmtRM, today } from "@/lib/format";
+import { fmtRM, today } from "@/lib/format";
 import type { VariationOrder } from "@/lib/types";
 import Link from "next/link";
 
