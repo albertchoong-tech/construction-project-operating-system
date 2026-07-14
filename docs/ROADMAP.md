@@ -50,17 +50,17 @@ No product features — this sprint builds the release process around the app. F
   storage sync, uptime + error monitoring (RELEASE.md §4–5).
 - ✅ **Production go-live checklist** — consolidated in RELEASE.md §6 (env split, retire demo
   accounts, backups, branch protection, monitoring, storage policies).
-- 🔎 **Sprint 10 manual verification — root cause found, live click pending sign-off.**
-  Driving the app in the automated browser pane pinpointed why Sprint 10's Cancel PO/VO/claim
-  and Approve buttons appeared to no-op: `ActionButton` opens a native `window.prompt()`
-  (`promptRemarks`) or `window.confirm()` dialog (`components/action-button.tsx`), and the
-  headless pane cannot accept native dialogs — so the click opens a dialog that hangs the
-  renderer and the server action never fires. **This is a test-tooling limitation, not a code
-  defect.** The recategorise control (`CostCentreSelect`) is a plain `<select>` with no dialog.
-  The Cancel/recategorise server actions share the exact guard→update→`recordAudit`→
-  `revalidatePath` shape as the labour edit already verified against the production DB (Sprint 10).
-  Completing the real click-through mutates production data (even a throwaway PO does), so it is
-  **held for explicit user authorization**; it remains a Go-Live checklist item until then.
+- 🔎 **Sprint 10 button verification — root cause found; native dialogs replaced (v1.3.1).**
+  Extensive driving of the app in the automated pane established why Sprint 10's Approve/Cancel/
+  reject buttons can't be exercised there: the app's authenticated `force-dynamic` pages **never
+  become interactive in the pane** — their content stays stranded in React's streaming/Suspense
+  hidden container, so JS-driven buttons never fire (native `<form>` posts still work without
+  hydration, which is why login and the labour-edit form verified fine). **A preview-tooling
+  limitation, not a code defect — production is unaffected; approvals run every sprint.**
+  As the durable fix, `ActionButton` was reworked (v1.3.1) to use an **in-app modal** instead of
+  native `window.prompt()`/`confirm()`: better UX and drivable by real E2E tests (Playwright).
+  Typecheck + production build pass. A live click-through still needs a normal browser (user) or
+  a Playwright E2E test — kept as a Go-Live checklist item.
 
 ### Sprint 11 — Reporting & Exports
 
@@ -174,6 +174,11 @@ provider API key in Vercel env; Sprint 13 (mobile offline) can run concurrently.
 ---
 
 ## Update Log
+- **2026-07-14** — v1.3.1 (`feature/action-button-modal` → develop → main): `ActionButton` now
+  uses an in-app confirm/remarks modal instead of native `prompt()`/`confirm()`. Shipped via the
+  new git-flow (first feature branch through the Sprint 11.5 process). Also corrected the Sprint 10
+  verification root cause: the pane can't hydrate authenticated streaming pages (not the native
+  dialogs alone) — a preview-tooling limit, production unaffected.
 - **2026-07-12** — Sprint 11.5 (Release Engineering & DevOps) appended. No product features:
   git-flow branching (`main`/`develop`/`demo`/`feature/*`), SemVer + retroactive tags
   `v1.0.0`–`v1.3.0`, `CHANGELOG.md`, `docs/RELEASE.md`, GitHub Actions CI, backup/monitoring/

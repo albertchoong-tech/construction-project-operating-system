@@ -10,6 +10,20 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.1] — 2026-07-14 — In-app confirm/remarks modal
+Branch `feature/action-button-modal`
+### Changed
+- `ActionButton` (approve / reject / cancel / delete / convert across the app) now opens an
+  in-app modal for confirmation and the optional audit-remarks note, replacing the browser's
+  native `confirm()` / `prompt()`. Consistent styling, an actual remarks textarea, Esc-to-cancel,
+  and — unlike native dialogs — drivable by real end-to-end tests (Playwright). Same component
+  API, so every call site is unchanged.
+### Notes
+- Diagnosed why these buttons can't be exercised in the automated preview pane: the app's
+  authenticated `force-dynamic` pages don't become interactive there (content stays in React's
+  streaming/Suspense hidden container; native `<form>` posts still work, JS-driven buttons don't).
+  This is a preview-tooling limitation — production is unaffected (approvals run every sprint).
+
 ## [1.3.0] — 2026-07-12 — Reporting & Exports
 Commit `3b5fbac` · migration `0006_reporting.sql` (applied live)
 ### Added
