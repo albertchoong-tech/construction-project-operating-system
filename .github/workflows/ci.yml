@@ -1,0 +1,46 @@
+name: CI
+
+# Pre-merge quality gate. Vercel still runs the real production build on deploy;
+# this catches type + build regressions on the PR before it reaches main.
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Required gate — needs no runtime env, catches most regressions.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Informational — Next build. Uses placeholder public env so the build can
+      # resolve the Supabase client at build time (pages are force-dynamic, so no
+      # real connection is made). Promote to a required gate once NEXT_PUBLIC_*
+      # are added as repo secrets and the build is confirmed green here.
+      - name: Build
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+        run: npm run build
+
+      - name: Lint
+        continue-on-error: true
+        run: npm run lint

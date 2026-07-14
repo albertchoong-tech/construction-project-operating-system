@@ -1,0 +1,62 @@
+# Changelog
+
+All notable changes to HSH ProjectOS are documented here. This project follows
+[Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`) from `1.0.0` onward.
+
+Versioning was introduced retroactively in Sprint 11.5; the entries below `1.3.0`
+map already-shipped sprints to the commits that delivered them. Sprint history and
+specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](docs/BACKLOG.md).
+
+## [Unreleased]
+- Sprint 12 — Notifications & Scheduled Automations (planned)
+
+## [1.3.0] — 2026-07-12 — Reporting & Exports
+Commit `3b5fbac` · migration `0006_reporting.sql` (applied live)
+### Added
+- `/reports` hub (Director + Finance only).
+- Printable **monthly financial report** — money in/out, net cash movement, claims
+  raised/certified, outstanding receivables/payables snapshot, month navigation.
+- Printable **project cost report** — committed/actual/budget by cost centre with variance.
+- **CSV exports** via role-gated API routes (`/api/reports/labour`, `/api/reports/payments`,
+  `/api/reports/project-cost`) — 403 for non Director/Finance, RLS-scoped.
+- Client-ready **progress-claim payment certificate**; claim numbers link to it.
+- Print button on PO detail; cost-centre picker on the budget form.
+
+### Release Engineering (Sprint 11.5)
+- Git-flow branching (`main` / `develop` / `demo` / `feature/*`).
+- GitHub Actions CI (typecheck + build) on PRs and pushes.
+- This CHANGELOG, `docs/RELEASE.md`, and retroactive version tags.
+
+## [1.2.0] — 2026-07-12 — Governance & Lifecycle
+Commit `0cd957b` · migrations `0004_team_access.sql`, `0005_quotations.sql`
+### Added
+- **User & Access Administration** (Sprint 8) — `/team` page, project-membership-scoped
+  RLS, `profiles` as the single source of truth for role + activation, hardened sign-up.
+- **Quotation-to-Project** (Sprint 9) — `/quotations` module, draft→submit→approve→convert
+  workflow copying line items into the BOQ, printable client-facing view.
+- **Record Editing & Corrections** (Sprint 10) — edit forms for pre-approval records,
+  PO cost-centre recategorisation, cancel-and-retain for approved PO/VO/claim, audit trail.
+
+## [1.1.0] — 2026-07-09 — Field, Cost & Mobile
+Commits `2ade6a1` (data), `d831271` (mobile) · migration `0003`
+### Added
+- Inspection issue/root-cause categories, multi-file attachments, categorised document centre.
+- Labour cost module feeding committed cost and margin.
+- PO cost centres, Cost-by-Category card, Healthy/Attention/Critical health indicator.
+- Mobile navigation (header/drawer/bottom bar), responsive tables→cards, camera capture,
+  role dashboards, `/inspections`, installable PWA.
+- UX polish — password show/hide, remember-me, KPI card fit.
+
+## [1.0.0] — 2026-07-09 — Core MVP + Auth Lock-down
+Commit `ec87111` · migrations `0001_init.sql`, `0002_lockdown.sql`
+### Added
+- Projects & Clients, BOQ/Budget, procurement engine (PR→PO→delivery with approval audit).
+- Site progress logs, variation orders, progress claims, payments, live P&L.
+- Director dashboard, oldest-first approval queue, milestones, inspections, document upload.
+- Email/password auth, role-based module gating and RLS, Director-only approvals.
+
+[Unreleased]: https://github.com/albertchoong-tech/construction-project-operating-system/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/albertchoong-tech/construction-project-operating-system/releases/tag/v1.3.0
+[1.2.0]: https://github.com/albertchoong-tech/construction-project-operating-system/releases/tag/v1.2.0
+[1.1.0]: https://github.com/albertchoong-tech/construction-project-operating-system/releases/tag/v1.1.0
+[1.0.0]: https://github.com/albertchoong-tech/construction-project-operating-system/releases/tag/v1.0.0

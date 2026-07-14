@@ -27,9 +27,42 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 8 | User & Access Administration | 2026-07-12 | `0e2cb4c` | /team page, project-membership-scoped RLS, profiles as role source of truth, hardened sign-up |
 | 9 | Quotation-to-Project | 2026-07-12 | `0d83d21` | /quotations module, approval workflow, convert-to-project copying lines into BOQ, print view |
 | 10 | Record Editing & Corrections | 2026-07-12 | `0cd957b` | Edit forms for draft records; PO cost-centre recategorise; cancel approved PO/VO/claim (audited, retained) |
-| 11 | **Reporting & Exports** | **2026-07-12** | `3b5fbac` | See below — latest sprint |
+| 11 | Reporting & Exports | 2026-07-12 | `3b5fbac` | Reports hub, monthly + project cost reports, CSV exports, payment certificate |
+| 11.5 | **Release Engineering & DevOps** | **2026-07-12** | _pending_ | See below — latest sprint |
 
-### Sprint 11 — Reporting & Exports (latest)
+### Sprint 11.5 — Release Engineering & DevOps (latest)
+
+No product features — this sprint builds the release process around the app. Full manual in
+[RELEASE.md](RELEASE.md); version history in [CHANGELOG.md](../CHANGELOG.md).
+
+- ✅ **Git branching model** — `main` (production) / `develop` (integration) / `demo` (stable
+  demo) / `feature/*`. `develop` + `demo` branched off the `v1.3.0` release point. Feature work
+  no longer pushes straight to `main` (CLAUDE.md deploy rules updated to match).
+- ✅ **Demo vs Production** — single-Vercel-project topology now (main → production, other
+  branches → preview URLs); two-project split documented as a go-live step for when real
+  customer data lands.
+- ✅ **Versioning & tags** — SemVer from `1.0.0`; `package.json` bumped to `1.3.0`; annotated
+  tags `v1.0.0`→`v1.3.0` applied to their release commits; `CHANGELOG.md` created.
+- ✅ **CI/CD** — GitHub Actions (`.github/workflows/ci.yml`): `npm ci` → typecheck (required) →
+  build + lint (informational). `.nvmrc` pins Node 20. Vercel remains the CD (git-only deploys).
+  Branch-protection + promoting build to a required gate documented as dashboard steps.
+- ✅ **Backup & monitoring recommendations** — Supabase daily backups + PITR + tested restore,
+  storage sync, uptime + error monitoring (RELEASE.md §4–5).
+- ✅ **Production go-live checklist** — consolidated in RELEASE.md §6 (env split, retire demo
+  accounts, backups, branch protection, monitoring, storage policies).
+- 🔎 **Sprint 10 manual verification — root cause found, live click pending sign-off.**
+  Driving the app in the automated browser pane pinpointed why Sprint 10's Cancel PO/VO/claim
+  and Approve buttons appeared to no-op: `ActionButton` opens a native `window.prompt()`
+  (`promptRemarks`) or `window.confirm()` dialog (`components/action-button.tsx`), and the
+  headless pane cannot accept native dialogs — so the click opens a dialog that hangs the
+  renderer and the server action never fires. **This is a test-tooling limitation, not a code
+  defect.** The recategorise control (`CostCentreSelect`) is a plain `<select>` with no dialog.
+  The Cancel/recategorise server actions share the exact guard→update→`recordAudit`→
+  `revalidatePath` shape as the labour edit already verified against the production DB (Sprint 10).
+  Completing the real click-through mutates production data (even a throwaway PO does), so it is
+  **held for explicit user authorization**; it remains a Go-Live checklist item until then.
+
+### Sprint 11 — Reporting & Exports
 
 Migration `0006` (`budgets.cost_category`, applied live) plus:
 
@@ -141,6 +174,12 @@ provider API key in Vercel env; Sprint 13 (mobile offline) can run concurrently.
 ---
 
 ## Update Log
+- **2026-07-12** — Sprint 11.5 (Release Engineering & DevOps) appended. No product features:
+  git-flow branching (`main`/`develop`/`demo`/`feature/*`), SemVer + retroactive tags
+  `v1.0.0`–`v1.3.0`, `CHANGELOG.md`, `docs/RELEASE.md`, GitHub Actions CI, backup/monitoring/
+  go-live guidance. `package.json` → `1.3.0`; CLAUDE.md deploy rules updated to the branching
+  model. Sprint 10 live click-through: root cause found (native prompt/confirm dialogs block the
+  automated pane — tooling gap, not a defect); real mutation held for explicit user sign-off.
 - **2026-07-12** — Sprint 11 appended as completed (`3b5fbac`). Verified on production via reliable methods (server-rendered report content + CSV `fetch` + REST ground truth) rather than synthetic clicks — reports and exports confirmed with correct figures. Backlog renumbered — 12–14 remain.
 - **2026-07-12** — Sprint 10 appended as completed (`0cd957b`). Edit forms verified against the production DB; button-based cancel/recategorise ship on the proven ActionButton pattern but need one manual click-through (browser test pane was dropping synthetic clicks — verified as a tooling artefact by reproducing the same false signal on the working Sprint 9 deploy). Briefly reverted (`4630630`) then reapplied after confirming the "regression" was a test-harness false positive. Backlog renumbered — 11–14 remain.
 - **2026-07-12** — Sprint 9 appended as completed (`0d83d21`); no unfinished scope; draft-quotation editing noted as part of Sprint 10's corrections scope; backlog renumbering reviewed — 10–14 unchanged.

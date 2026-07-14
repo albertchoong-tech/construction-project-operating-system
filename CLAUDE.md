@@ -39,11 +39,17 @@ build the wrong thing (e.g. a marketing landing page). Open the plan and build f
 7. Never put secrets in frontend code.
 
 ## Deploy & data (binding — this stack is already provisioned)
-- **Deploy by git, never by CLI.** `git add -A && git commit -m "…" && git push` to `main`;
-  Vercel auto-deploys from GitHub. Do NOT run `vercel deploy` / `vercel --prod` with local
-  files — it desyncs git, and the next push silently overwrites your live app.
+- **Deploy by git, never by CLI.** Vercel auto-deploys from GitHub. Do NOT run
+  `vercel deploy` / `vercel --prod` with local files — it desyncs git, and the next push
+  silently overwrites your live app.
+- **Follow the branching model (since Sprint 11.5 — see `docs/RELEASE.md`).** Feature work goes
+  on a `feature/*` branch → PR into `develop` → verified on its preview → release PR into `main`
+  (production) → tag. **Do NOT push features straight to `main`.** (The old "push to main"
+  rule applied to the solo bootstrap phase and is superseded.) Hotfixes: `hotfix/*` off `main`,
+  then merge `main` back into `develop`.
 - **Commit + push every change.** Git is the source of truth; uncommitted work is lost on
-  the next deploy.
+  the next deploy. Cutting a release (version bump, CHANGELOG, tag, fast-forward `demo`) follows
+  the checklist in `docs/RELEASE.md` §3.
 - **The Supabase database is already provisioned** and its keys are in this project's Vercel
   env. Pull them locally: `vercel link` then `vercel env pull .env.local`. Don't invent new ones.
 - **Database-first:** the schema is written at `supabase/migrations/0001_init.sql` but **not yet
