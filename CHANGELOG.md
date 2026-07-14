@@ -10,6 +10,18 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.3] — 2026-07-14 — Lint gate fixed
+Branch `feature/lint-config`
+### Fixed
+- **CI lint step no longer fails.** The project had no ESLint config, so `next lint` fell into
+  its interactive setup prompt and exited 1 in CI (masked by `continue-on-error`, so it never
+  actually ran). Added a flat config (`eslint.config.mjs`, `next/core-web-vitals` +
+  `next/typescript`) and switched the script to the ESLint CLI (`next lint` is deprecated).
+- Removed two dead imports flagged by the now-working linter (`Link`, `fmtDate`).
+### Changed
+- Lint is now a **required, zero-warning CI gate** (`--max-warnings 0`, `continue-on-error`
+  removed) — new warnings fail the build.
+
 ## [1.3.2] — 2026-07-14 — E2E smoke-test safety net
 Branch `feature/e2e-smoke`
 ### Added
