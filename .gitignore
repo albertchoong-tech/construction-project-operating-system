@@ -12,3 +12,10 @@ npm-debug.log*
 next-env.d.ts
 .env*
 .claude/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.auth/

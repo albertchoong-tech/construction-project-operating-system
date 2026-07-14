@@ -167,8 +167,12 @@ Do all of this **before** the first real company data is entered.
 
 **Current pipeline.**
 - **CI (GitHub Actions, `.github/workflows/ci.yml`)** runs on PRs and pushes to `main`/`develop`:
-  `npm ci` → **typecheck** (required gate) → **build** (informational, placeholder public env) →
-  **lint** (informational). Node version pinned via `.nvmrc` (20).
+  - `verify` job: `npm ci` → **typecheck** (required gate) → **build** (informational,
+    placeholder public env) → **lint** (informational). Node pinned via `.nvmrc` (20).
+  - `e2e` job (needs `verify`): builds the app and runs the **Playwright smoke suite**
+    (`e2e/`, 16 read-only tests across the core workflows). It **skips itself** until the repo
+    secrets `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `E2E_PASSWORD` are set,
+    so it never blocks merges before setup. See `e2e/README.md`.
 - **CD (Vercel, git-connected)** builds and deploys automatically: `main` → production,
   every other branch/PR → a preview URL. Deploys are **only** triggered by git — never the CLI.
 
@@ -184,9 +188,13 @@ Do all of this **before** the first real company data is entered.
    once environments are split, so preview traffic never mutates production data.
 5. Optional: add a migrations check / `supabase db diff` step so schema drift is caught in CI.
 
+2b. **Enable the E2E job**: add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and
+   `E2E_PASSWORD` as repository secrets so the Playwright smoke suite runs (it skips until then),
+   and add `e2e` to the required checks in branch protection once green.
+
 **Deliberately out of scope (small-team appropriate):** no container/Kubernetes pipeline, no
-blue-green infra, no automated E2E suite yet — Vercel previews + typecheck + manual verification
-of the success scenario are the right altitude until team size or data risk grows.
+blue-green infra. The E2E suite is smoke-level and read-only for now; write-path E2E waits on an
+isolated test database (§2 go-live). That altitude is right until team size or data risk grows.
 
 ---
 
