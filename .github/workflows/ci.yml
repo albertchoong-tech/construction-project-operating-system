@@ -42,8 +42,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
         run: npm run build
 
+      # Required gate — ESLint (flat config) with zero-warning tolerance.
       - name: Lint
-        continue-on-error: true
         run: npm run lint
 
   e2e:
