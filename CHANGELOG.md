@@ -10,6 +10,17 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.4] — 2026-07-14 — CI hardening (E2E diagnostics, action versions)
+Branch `feature/ci-hardening`
+### Changed
+- `auth.setup.ts` now surfaces the app's **actual** sign-in error (e.g. "Invalid login
+  credentials", "fetch failed") instead of a generic locator timeout — so a failing E2E run in
+  CI names the exact misconfigured secret.
+- E2E job gate now requires **all three** secrets (adds `NEXT_PUBLIC_SUPABASE_ANON_KEY`) — a
+  missing one skips cleanly rather than failing mid-run.
+- Bumped GitHub Actions to Node-24 majors (`checkout@v5`, `setup-node@v5`, `cache@v5`,
+  `upload-artifact@v5`) to clear the "Node.js 20 is deprecated" runner annotation.
+
 ## [1.3.3] — 2026-07-14 — Lint gate fixed
 Branch `feature/lint-config`
 ### Fixed
