@@ -96,6 +96,20 @@ jobs:
             echo "FAIL  E2E_PASSWORD is missing"
             fail=1
           fi
+          # Live check: confirm the URL + anon key are a valid pair for the SAME
+          # Supabase project (catches a good key paired with the wrong URL, which
+          # Supabase reports as "Invalid API key"). No password; no values printed.
+          if [ "$fail" -eq 0 ]; then
+            http=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/settings")
+            if [ "$http" = "200" ]; then
+              echo "PASS  Supabase accepted the URL + anon key pair (/auth/v1/settings -> 200)"
+            else
+              echo "FAIL  Supabase rejected the URL + anon key pair (/auth/v1/settings -> $http)."
+              echo "      NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be the URL"
+              echo "      and anon key from the SAME project (401 = 'Invalid API key')."
+              fail=1
+            fi
+          fi
           if [ "$fail" -ne 0 ]; then
             echo "::error::E2E secret validation failed — fix the repository secrets (their values are never printed)."
             exit 1
