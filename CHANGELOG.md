@@ -10,6 +10,15 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.7] — 2026-07-14 — Preflight live pair-check
+Branch `feature/ci-hardening`
+### Added
+- The E2E preflight now does a **live check** that the `NEXT_PUBLIC_SUPABASE_URL` +
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` secrets are a valid pair for the **same** Supabase project
+  (`GET /auth/v1/settings` with the anon key → expects 200). Catches a good key paired with the
+  wrong URL — which Supabase reports as "Invalid API key" — at preflight, before the build, with
+  no password and no secret values printed.
+
 ## [1.3.6] — 2026-07-14 — Fix empty E2E_EMAIL in CI
 Branch `feature/ci-hardening`
 ### Fixed
