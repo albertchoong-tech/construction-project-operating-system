@@ -17,6 +17,8 @@ if (!password) {
  * These tests are read-only smoke checks — they never mutate data.
  */
 export const CREDENTIALS = {
-  email: process.env.E2E_EMAIL ?? "director.demo@hshprojectos.com",
+  // `||` (not `??`) so an empty string — which is what an unset `${{ vars.E2E_EMAIL }}`
+  // injects in CI — falls back to the default rather than becoming a blank email.
+  email: process.env.E2E_EMAIL || "director.demo@hshprojectos.com",
   password,
 };
