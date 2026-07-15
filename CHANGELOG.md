@@ -10,6 +10,19 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.6] — 2026-07-14 — Fix empty E2E_EMAIL in CI
+Branch `feature/ci-hardening`
+### Fixed
+- **The real cause of the CI E2E failure** (secrets were fine — preflight passed): the workflow
+  passes `E2E_EMAIL: ${{ vars.E2E_EMAIL }}`, which injects an **empty string** when the repo
+  variable is unset. `env.ts` used `??` (only falls back on null/undefined), so the email became
+  `""` and sign-in failed — while locally `E2E_EMAIL` is undefined, so `??` worked (why local
+  passed but CI didn't). Changed to `||` so an empty string falls back to the default.
+- Bumped `actions/upload-artifact` to `@v7` (v5 still targeted Node 20) — clears the last
+  "Node.js 20 is deprecated" runner annotation.
+### Verified
+- Reproduced the CI condition locally (`E2E_EMAIL="" CI=true`) — all 19 tests pass.
+
 ## [1.3.5] — 2026-07-14 — E2E secret preflight
 Branch `feature/ci-hardening`
 ### Added
