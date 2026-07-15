@@ -171,3 +171,5 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+          # Preflight can fail before any report exists — don't warn about it.
+          if-no-files-found: ignore
