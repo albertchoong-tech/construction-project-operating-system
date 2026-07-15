@@ -70,6 +70,37 @@ jobs:
             echo "::warning::E2E smoke tests skipped — set all three of NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and E2E_PASSWORD repository secrets to enable them."
           fi
 
+      # Fail fast with a clear message if a secret is a placeholder / malformed —
+      # BEFORE the build bakes it in. Never prints the values (GitHub also masks
+      # them). NEXT_PUBLIC_* are build-time-inlined, so a bad URL here = a broken
+      # build that no runtime env can fix.
+      - name: Preflight — validate secrets (values never printed)
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          fail=0
+          if printf '%s' "$NEXT_PUBLIC_SUPABASE_URL" | grep -Eq '^https://[a-z0-9]{20}\.supabase\.co/?$'; then
+            echo "PASS  NEXT_PUBLIC_SUPABASE_URL is a real Supabase project URL (…​.supabase.co)"
+          else
+            echo "FAIL  NEXT_PUBLIC_SUPABASE_URL is missing or not https://<20-char-ref>.supabase.co (placeholder or typo?)"
+            fail=1
+          fi
+          if [ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] && [ "${#NEXT_PUBLIC_SUPABASE_ANON_KEY}" -ge 40 ]; then
+            echo "PASS  NEXT_PUBLIC_SUPABASE_ANON_KEY is present"
+          else
+            echo "FAIL  NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or too short"
+            fail=1
+          fi
+          if [ -n "$E2E_PASSWORD" ]; then
+            echo "PASS  E2E_PASSWORD is present"
+          else
+            echo "FAIL  E2E_PASSWORD is missing"
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::E2E secret validation failed — fix the repository secrets (their values are never printed)."
+            exit 1
+          fi
+
       - uses: actions/setup-node@v5
         if: steps.gate.outputs.enabled == 'true'
         with:
@@ -101,12 +132,22 @@ jobs:
         if: steps.gate.outputs.enabled == 'true' && steps.pw-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      # Explicit env (in addition to the job-level env) so it is unmistakable that
+      # the real Supabase values are present when Next.js inlines NEXT_PUBLIC_* here.
       - name: Build app
         if: steps.gate.outputs.enabled == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Run E2E smoke tests
         if: steps.gate.outputs.enabled == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          E2E_EMAIL: ${{ vars.E2E_EMAIL }}
         run: npm run test:e2e
 
       - name: Upload Playwright report
