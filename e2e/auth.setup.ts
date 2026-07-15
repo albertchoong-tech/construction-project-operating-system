@@ -20,11 +20,17 @@ setup("authenticate", async ({ page }) => {
     await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20_000 });
   } catch {
     const alert = page.getByRole("alert");
-    const reported = (await alert.count())
-      ? (await alert.first().innerText()).trim()
-      : "no error message was shown";
+    let reported: string;
+    if (await alert.count()) {
+      reported = (await alert.first().innerText()).trim() || "(alert shown but empty)";
+    } else {
+      // No alert — capture a snippet of the page so a blank failure is still legible
+      // (e.g. a server error from a bad NEXT_PUBLIC_SUPABASE_URL baked into the build).
+      const body = (await page.locator("body").innerText().catch(() => "")) || "";
+      reported = `no error alert; page text: "${body.replace(/\s+/g, " ").trim().slice(0, 180)}"`;
+    }
     throw new Error(
-      `Sign-in did not leave /login for ${CREDENTIALS.email}. App reported: "${reported}". ` +
+      `Sign-in did not leave /login for ${CREDENTIALS.email}. App reported: ${reported}. ` +
         "Verify the E2E_PASSWORD and NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY " +
         "repository secrets (see e2e/README.md).",
     );

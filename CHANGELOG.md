@@ -10,6 +10,21 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.5] — 2026-07-14 — E2E secret preflight
+Branch `feature/ci-hardening`
+### Added
+- **Preflight validation** in the E2E job: fails fast with a clear message if a Supabase secret
+  is missing/placeholder/malformed, **before** the build inlines it — never printing any value.
+- Explicit `env` on the `Build app` and `Run E2E` steps so it is unmistakable that the real
+  `NEXT_PUBLIC_*` values are present when Next.js inlines them at build time.
+### Changed
+- `auth.setup.ts` now captures the login-page text when there's no error alert, so a blank
+  sign-in failure is still legible in CI logs.
+### Notes
+- Root cause of the earlier CI E2E failure: the GitHub `NEXT_PUBLIC_SUPABASE_*` secret values did
+  not match the working `.env.local` (a `NEXT_PUBLIC_*` value is baked in at build time, so a bad
+  secret breaks the CI build). Resolved by correcting the repository secrets.
+
 ## [1.3.4] — 2026-07-14 — CI hardening (E2E diagnostics, action versions)
 Branch `feature/ci-hardening`
 ### Changed
