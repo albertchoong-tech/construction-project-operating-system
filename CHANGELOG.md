@@ -10,6 +10,12 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.8] — 2026-07-14 — Annotation cleanup
+Branch `feature/ci-hardening`
+### Changed
+- `upload-artifact` step uses `if-no-files-found: ignore` so a preflight failure (no report yet)
+  no longer emits a spurious "No files found" warning annotation.
+
 ## [1.3.7] — 2026-07-14 — Preflight live pair-check
 Branch `feature/ci-hardening`
 ### Added
