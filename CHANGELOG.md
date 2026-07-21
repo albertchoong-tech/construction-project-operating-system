@@ -10,6 +10,12 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.3.9] — 2026-07-14 — Manual CI trigger
+Branch `feature/ci-hardening`
+### Added
+- `workflow_dispatch` on the CI workflow, so CI can be re-run from the Actions tab without
+  pushing a commit (needed when only repository secrets change).
+
 ## [1.3.8] — 2026-07-14 — Annotation cleanup
 Branch `feature/ci-hardening`
 ### Changed
