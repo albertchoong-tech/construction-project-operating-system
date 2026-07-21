@@ -47,7 +47,9 @@ export function MobileNav({
 
   // Bottom bar: up to 4 primary destinations + More
   const bottomItems = NAV_ITEMS.filter(
-    (i) => ["/", "/projects", "/site-progress", "/inspections"].includes(i.href) && allowed(i.href),
+    // "Site Updates" replaces the separate Site Progress / Inspections tabs —
+    // both remain reachable from the More menu and the desktop sidebar.
+    (i) => ["/", "/projects", "/site-updates"].includes(i.href) && allowed(i.href),
   ).slice(0, 4);
 
   const isActive = (href: string) =>
@@ -136,7 +138,7 @@ export function MobileNav({
               }`}
             >
               <NavIcon d={item.icon} className="w-6 h-6" />
-              {item.href === "/site-progress" ? "Site" : item.href === "/inspections" ? "Inspect" : item.label}
+              {item.href === "/site-updates" ? "Site" : item.label}
             </Link>
           ))}
           <button

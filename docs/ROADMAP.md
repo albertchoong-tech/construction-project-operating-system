@@ -28,7 +28,46 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 9 | Quotation-to-Project | 2026-07-12 | `0d83d21` | /quotations module, approval workflow, convert-to-project copying lines into BOQ, print view |
 | 10 | Record Editing & Corrections | 2026-07-12 | `0cd957b` | Edit forms for draft records; PO cost-centre recategorise; cancel approved PO/VO/claim (audited, retained) |
 | 11 | Reporting & Exports | 2026-07-12 | `3b5fbac` | Reports hub, monthly + project cost reports, CSV exports, payment certificate |
-| 11.5 | **Release Engineering & DevOps** | **2026-07-12** | _pending_ | See below — latest sprint |
+| 11.5 | Release Engineering & DevOps | 2026-07-12 | `738a5b4` | Git-flow, SemVer + tags, CI (typecheck/lint/build), backup & go-live docs |
+| 11.6 | **Unified Site Updates, Video Evidence & Plans/Drawings** | **2026-07-14** | `v1.4.0` | See below — latest sprint |
+
+### Sprint 11.6 — Unified Site Updates, Video Evidence & Plans/Drawings (latest)
+
+**User-feedback sprint** following the live demonstration. Migration `0007_site_updates.sql`
+(additive, applied). Full detail in [CHANGELOG](../CHANGELOG.md#140--2026-07-14).
+
+- ✅ **`/site-updates`** — one mobile-first entry point; segmented control picks Progress Update
+  or Site Inspection. **Presentation layer only**: each submission routes to the existing
+  `addProgressLog` / `addInspection` action and its own table. No table merge, no duplicated
+  logic; completion %, health indicator, attachments and audit behave exactly as before.
+- ✅ Combined **Recent Site Updates** feed (All / Progress / Inspection filters), each row
+  labelled and linked to its detail record; evidence counts (📷 / 🎥 / 📄) shown inline.
+- ✅ **Site update detail view** — photos, videos, drawing reference, remarks.
+- ✅ **Video evidence** on both types — record or choose, validated, retryable.
+  **150 MB · ~90 s · max 3 clips**, enforced on client *and* server.
+- ✅ **Per-photo / per-video captions**; **drawing reference** pinned to a specific revision.
+- ✅ **Plans & Drawings** project tab — revision register, current shown prominently,
+  superseded retained and clearly marked. Upload: Director + QS. Revise/delete: Director only.
+- ✅ Mobile bottom nav "Site" → Site Updates; Site Progress + Inspections retained in the More
+  menu, sidebar, project tabs and reports. **All existing URLs still work.**
+- ✅ **27/27 E2E green** (19 original — no regression — plus 8 new); typecheck, lint (0 warnings)
+  and production build all pass.
+
+**Architecture note:** video and drawing files upload **directly browser→Supabase Storage**.
+Vercel caps serverless request bodies at ~4.5 MB, so the previous 20 MB app limit and 25 MB
+`bodySizeLimit` were unreachable in production — routing video through a server action would
+always have failed. The browser uses its authenticated session against the existing bucket
+policy (no service-role key, no new endpoint); only the storage path + metadata reaches the
+server action, which re-validates before writing `project_documents`.
+
+**Ops note:** migration 0007 initially appeared to apply but did not — it was being run against
+a different Supabase project. Diagnosed by proving the API and SQL editor were different
+databases (a throwaway table created in the editor was invisible to the API). The original
+rollback cause was `can_write` being absent on that other project, which failed the RLS chunk
+and rolled back the whole single-transaction script. **Always confirm the project ref in the
+dashboard URL matches `NEXT_PUBLIC_SUPABASE_URL` before running a migration.**
+
+### Sprint 11.5 — Release Engineering & DevOps
 
 ### Sprint 11.5 — Release Engineering & DevOps (latest)
 
@@ -173,7 +212,28 @@ provider API key in Vercel env; Sprint 13 (mobile offline) can run concurrently.
 
 ---
 
+### Known limitations from Sprint 11.6
+- **Write-path E2E is not automated** (CI must not mutate the shared database). Submitting an
+  update, uploading video, and issuing a drawing revision are **manual** checks — see the
+  handover list. Automating them needs the isolated test DB from RELEASE.md §2.
+- **Editing** a progress log / inspection does not yet expose the new fields (area, corrective
+  action, responsible party, follow-up date, drawing reference). They are set at creation; the
+  edit forms leave them untouched rather than wiping them.
+- **One drawing reference per update** (matches the request); multi-reference would need a
+  junction table.
+- **Video poster frames are best-effort** — if the browser refuses to decode a frame the card
+  falls back to a plain video player with no thumbnail.
+- **Storage is still not membership-scoped per project path** (pre-existing limitation): files
+  are login-gated and served from public URLs. Unchanged by this sprint, but video makes it
+  more material — see the Go-Live checklist.
+- **`zz_conn_test`** — throwaway table created while diagnosing the migration; drop it if the
+  cleanup statement didn't run.
+
 ## Update Log
+- **2026-07-14** — Sprint 11.6 (v1.4.0) appended: unified `/site-updates`, video evidence,
+  per-attachment captions, drawing references and the Plans & Drawings register. Migration 0007
+  applied. 27/27 E2E green. Backlog updated with the follow-ups; Sprint 12 deliberately held
+  back as a separate release.
 - **2026-07-14** — v1.3.2 (`feature/e2e-smoke` → develop → main): **Playwright E2E smoke-test
   framework** (`e2e/`, `playwright.config.ts`) — 16 read-only tests across auth, dashboard,
   projects, PRs, POs, site progress, inspections, VOs, claims, payments, labour, reports. Wired
