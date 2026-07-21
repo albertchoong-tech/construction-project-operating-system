@@ -143,6 +143,8 @@ export type SiteProgressLog = {
   workers_count: number;
   issues: string | null;
   photo_urls: string[];
+  area: string | null;
+  drawing_id: string | null;
   created_at: string;
   projects?: Project | null;
 };
@@ -156,6 +158,10 @@ export type InspectionRecord = {
   result: "pass" | "fail" | "conditional" | null;
   issue_category: string | null;
   issue_detail: string | null;
+  corrective_action: string | null;
+  responsible_party: string | null;
+  follow_up_date: string | null;
+  drawing_id: string | null;
   remarks: string | null;
   created_at: string;
 };

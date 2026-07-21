@@ -76,6 +76,36 @@ the server action, which re-validates it (project prefix, MIME, size) before wri
 > transaction**, so one error rolls back the entire file — and running against the wrong project
 > looks identical to "nothing happened". Migration `0007` was lost this way once.
 
+### Verifying a migration (learned the hard way)
+Three migrations in one session reported success but had not applied. Positive tests passed
+every time; only a negative test caught it. So:
+
+1. **Verify from the application side, not the SQL editor.** The editor can be pointed at a
+   different project or branch. Query the REST API, or call a new function via `/rest/v1/rpc/…`.
+2. **For any RLS or policy change, test the negative case.** Prove the thing that *should* be
+   rejected actually is. "Uploads still work" says nothing about whether a policy is enforcing —
+   an unchanged permissive policy also lets uploads work.
+3. **Distinguish the error codes.** Postgres `42703` ("column does not exist") means genuinely
+   absent. PostgREST `PGRST205`/`PGRST204` mean *schema cache* — reload with
+   `notify pgrst, 'reload schema';` before concluding anything.
+4. **Prove which database you're on** by creating a throwaway table in the editor and reading it
+   through the API. Seed data is *not* a fingerprint — identical demo rows exist in more than one
+   project here.
+5. Remember RLS policies are **OR'd**: one leftover permissive policy defeats every new rule.
+   List `pg_policies` before assuming a drop-and-recreate worked.
+
+### Write-path tests (since v1.5.0)
+Tests that mutate data are tagged **`@write`** and excluded from CI and normal local runs by
+`grepInvert` in `playwright.config.ts`. Run them deliberately:
+
+```bash
+E2E_WRITE=1 npx playwright test --grep @write
+```
+
+They must create only their own records and **clean up via the API, not the UI** — a UI failure
+must never strand test data. Until an isolated test database exists (§2), they run against the
+shared database, so keep them few and self-contained.
+
 ### Environment variables (per Vercel project)
 | Variable | Where | Secret? |
 |---|---|---|

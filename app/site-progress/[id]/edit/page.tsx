@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { ActionForm, Field, TextInput, TextArea } from "@/components/form";
+import { DrawingSelect, type DrawingChoice } from "@/components/drawing-select";
 import { updateProgressLog } from "@/lib/actions/site";
 import type { SiteProgressLog } from "@/lib/types";
 
@@ -16,6 +17,12 @@ export default async function EditProgressLogPage({ params }: { params: Promise<
     .eq("id", id)
     .single<SiteProgressLog>();
   if (!log) notFound();
+
+  const { data: drawings } = await supabase
+    .from("project_drawings")
+    .select("id, drawing_no, revision_no, title, status")
+    .eq("project_id", log.project_id)
+    .order("drawing_no");
 
   return (
     <div className="max-w-2xl">
@@ -44,6 +51,15 @@ export default async function EditProgressLogPage({ params }: { params: Promise<
             </Field>
             <Field label="Reported by" className="sm:col-span-3">
               <TextInput name="reported_by" defaultValue={log.reported_by ?? ""} />
+            </Field>
+            <Field label="Area / location" className="sm:col-span-2">
+              <TextInput name="area" defaultValue={log.area ?? ""} placeholder="e.g. Level 2 — east wing" />
+            </Field>
+            <Field label="Drawing reference" className="sm:col-span-2">
+              <DrawingSelect
+                drawings={(drawings ?? []) as DrawingChoice[]}
+                defaultValue={log.drawing_id}
+              />
             </Field>
           </div>
         </ActionForm>

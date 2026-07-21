@@ -10,6 +10,33 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.5.0] — 2026-07-22 — Site Updates follow-ups
+Branch `feature/site-updates-followups` · migration `0008_storage_scoping.sql`
+_Sprint 11.7 — closes the gaps left by 11.6._
+
+### Added
+- **The v1.4.0 fields are now editable.** Progress log edit gains **area** and **drawing
+  reference**; inspection edit gains **corrective action**, **responsible party**,
+  **follow-up date** and **drawing reference**. Previously these could only be set at creation.
+  The drawing picker includes superseded revisions so an existing reference is never silently
+  cleared, and each field was added to the form and the update action together so nothing is
+  nulled on save.
+- **Write-path E2E** (`drawings-write.spec.ts`) covering the revision flow that read-only tests
+  can't reach: uploading a second revision of the same drawing number must supersede the first,
+  leaving exactly one `current`. Tagged **`@write`** and excluded from CI and normal local runs
+  via `grepInvert`; run deliberately with `E2E_WRITE=1 npx playwright test --grep @write`.
+  It creates only its own rows and cleans up **via the API**, so a UI failure can't strand data.
+
+### Security
+- **Storage is now membership-scoped** (migration `0008`). Previously *any* authenticated user
+  could insert or delete *any* object in the `project-documents` bucket. Uploads and deletes are
+  now restricted to projects the user can read, using the `<project_id>/…` path convention and a
+  `storage_project_id()` helper that returns null for malformed paths. Directors may still clear
+  legacy objects whose paths predate the convention.
+  - ⚠️ **Read access is unchanged** — the bucket is still public, so anyone holding a file URL can
+    view it. Closing that requires a private bucket plus signed URLs and a rewrite of every stored
+    `file_url`; deliberately left as a separate decision.
+
 ## [1.4.0] — 2026-07-14 — Unified Site Updates, Video Evidence & Plans/Drawings
 Branch `feature/unified-site-updates` · migration `0007_site_updates.sql` (applied)
 _User-feedback sprint following the live demonstration._
