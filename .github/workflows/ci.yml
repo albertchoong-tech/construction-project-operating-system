@@ -8,6 +8,9 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # Lets you re-run CI from the Actions tab without a commit — useful when only
+  # repository secrets changed.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
