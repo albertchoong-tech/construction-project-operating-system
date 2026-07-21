@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { uploadAttachments } from "@/lib/attachments";
+import { uploadAttachments, recordUploadedVideos } from "@/lib/attachments";
 import { today } from "@/lib/format";
 import type { ActionResult } from "@/components/form";
 
@@ -33,6 +33,8 @@ export async function addProgressLog(
       project_id,
       log_date,
       reported_by: ((formData.get("reported_by") as string) || "").trim() || null,
+      area: ((formData.get("area") as string) || "").trim() || null,
+      drawing_id: ((formData.get("drawing_id") as string) || "").trim() || null,
       work_done,
       completion_pct,
       weather: ((formData.get("weather") as string) || "").trim() || null,
@@ -52,6 +54,15 @@ export async function addProgressLog(
   );
   if (uploadError) return { error: uploadError };
 
+  const videoError = await recordUploadedVideos(
+    formData,
+    project_id,
+    "site_progress_log",
+    inserted.id,
+    "Site Video",
+  );
+  if (videoError) return { error: videoError };
+
   // Surface the latest completion % on the project master
   const { data: latest } = await supabase
     .from("site_progress_logs")
@@ -69,6 +80,7 @@ export async function addProgressLog(
   }
 
   revalidatePath("/site-progress");
+  revalidatePath("/site-updates");
   revalidatePath(`/projects/${project_id}`);
   revalidatePath("/projects");
   revalidatePath("/");
@@ -162,9 +174,13 @@ export async function addInspection(
       inspection_date: (formData.get("inspection_date") as string) || today(),
       inspector: ((formData.get("inspector") as string) || "").trim() || null,
       area: ((formData.get("area") as string) || "").trim() || null,
+      drawing_id: ((formData.get("drawing_id") as string) || "").trim() || null,
       result,
       issue_category,
       issue_detail: issue_category === "Others" ? issue_detail : null,
+      corrective_action: ((formData.get("corrective_action") as string) || "").trim() || null,
+      responsible_party: ((formData.get("responsible_party") as string) || "").trim() || null,
+      follow_up_date: ((formData.get("follow_up_date") as string) || "").trim() || null,
       remarks: ((formData.get("remarks") as string) || "").trim() || null,
     })
     .select("id")
@@ -180,7 +196,19 @@ export async function addInspection(
   );
   if (uploadError) return { error: uploadError };
 
+  const videoError = await recordUploadedVideos(
+    formData,
+    project_id,
+    "inspection_record",
+    data.id,
+    "Inspection Video",
+  );
+  if (videoError) return { error: videoError };
+
   revalidatePath(`/projects/${project_id}`);
+  revalidatePath("/site-updates");
+  revalidatePath("/inspections");
+  revalidatePath("/");
   return { ok: true };
 }
 

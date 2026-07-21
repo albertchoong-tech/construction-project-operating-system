@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Photo = { file: File; url: string };
+type Photo = { file: File; url: string; caption: string };
 
 const MAX_DIMENSION = 1600;
 const COMPRESS_THRESHOLD = 900 * 1024; // only recompress images above ~900KB
@@ -73,7 +73,7 @@ export function PhotoField({
       const added: Photo[] = [];
       for (const original of Array.from(list)) {
         const file = await compressImage(original);
-        added.push({ file, url: URL.createObjectURL(file) });
+        added.push({ file, url: URL.createObjectURL(file), caption: "" });
       }
       setPhotos((prev) => [...prev, ...added]);
     } finally {
@@ -96,6 +96,13 @@ export function PhotoField({
 
       {/* the input the form actually submits */}
       <input ref={formInputRef} type="file" name="attachments" multiple hidden aria-hidden tabIndex={-1} />
+      {/* Per-photo notes, in the same order as the files above. Server actions
+          that don't use captions simply ignore this field. */}
+      <input
+        type="hidden"
+        name="attachment_captions"
+        value={JSON.stringify(photos.map((p) => p.caption.trim() || null))}
+      />
       {/* pickers */}
       <input
         ref={cameraRef}
@@ -147,26 +154,41 @@ export function PhotoField({
 
       {photos.length > 0 && (
         <>
-          <div className="flex flex-wrap gap-2 mt-3">
+          <ul className="mt-3 space-y-2">
             {photos.map((p, idx) => (
-              <div key={p.url} className="relative">
+              <li key={p.url} className="flex items-start gap-3 rounded-lg border border-slate-200 p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.url}
                   alt={p.file.name}
-                  className="h-20 w-20 object-cover rounded-lg border border-slate-200"
+                  className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 object-cover"
                 />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs text-slate-500">{p.file.name}</p>
+                  <input
+                    type="text"
+                    value={p.caption}
+                    onChange={(e) =>
+                      setPhotos((prev) =>
+                        prev.map((x, i) => (i === idx ? { ...x, caption: e.target.value } : x)),
+                      )
+                    }
+                    placeholder="Add a note for this photo (optional)"
+                    aria-label={`Note for ${p.file.name}`}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => removePhoto(idx)}
                   aria-label={`Remove ${p.file.name}`}
-                  className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-slate-900 text-white text-sm leading-none flex items-center justify-center shadow"
+                  className="shrink-0 rounded-full bg-slate-900 text-white w-7 h-7 text-sm leading-none flex items-center justify-center shadow"
                 >
                   ×
                 </button>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <p className="text-xs text-slate-400 mt-2">
             {photos.length} photo{photos.length > 1 ? "s" : ""} · {totalKB.toLocaleString()} KB —
             uploads when you save
