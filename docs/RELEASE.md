@@ -62,6 +62,20 @@ Split demo and production so a demo click can never touch real records:
    keeps the seed database). Demo and production are now fully isolated.
 4. Update this section and the env matrix below once done.
 
+### Uploads — why large files bypass the server (since v1.4.0)
+**Vercel caps serverless request bodies at ~4.5 MB**, regardless of Next's
+`serverActions.bodySizeLimit`. Photos survive only because they are canvas-compressed in the
+browser first. **Video and drawing files therefore upload directly browser→Supabase Storage**
+using the user's authenticated session against the existing `project-documents` bucket policy —
+no service-role key and no separate upload endpoint. Only the storage path plus metadata reaches
+the server action, which re-validates it (project prefix, MIME, size) before writing
+`project_documents`. Keep new large-file features on this path.
+
+> ⚠️ **Before running any migration:** confirm the project ref in the Supabase dashboard URL
+> matches `NEXT_PUBLIC_SUPABASE_URL`. The SQL editor runs a pasted script as a **single
+> transaction**, so one error rolls back the entire file — and running against the wrong project
+> looks identical to "nothing happened". Migration `0007` was lost this way once.
+
 ### Environment variables (per Vercel project)
 | Variable | Where | Secret? |
 |---|---|---|

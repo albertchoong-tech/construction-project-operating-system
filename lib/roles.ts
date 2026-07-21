@@ -27,6 +27,8 @@ export const MODULE_ACCESS: Record<string, Role[]> = {
   suppliers: ["director", "purchasing_officer", "project_manager"],
   "purchase-requests": ["director", "purchasing_officer", "project_manager"],
   "purchase-orders": ["director", "purchasing_officer", "finance"],
+  // Unified mobile-first entry point; routes to the same two domain models.
+  "site-updates": ["director", "project_manager", "site_supervisor"],
   "site-progress": ["director", "project_manager", "site_supervisor"],
   inspections: ["director", "project_manager", "site_supervisor"],
   "variation-orders": ["director", "quantity_surveyor"],

@@ -10,6 +10,53 @@ specifications live in [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/BACKLOG.md](
 ## [Unreleased]
 - Sprint 12 — Notifications & Scheduled Automations (planned)
 
+## [1.4.0] — 2026-07-14 — Unified Site Updates, Video Evidence & Plans/Drawings
+Branch `feature/unified-site-updates` · migration `0007_site_updates.sql` (applied)
+_User-feedback sprint following the live demonstration._
+
+### Added
+- **`/site-updates`** — one mobile-first entry point for the site team. A segmented control
+  chooses **Progress Update** or **Site Inspection**; each submission is routed to the
+  **existing** domain action (`addProgressLog` → `site_progress_logs`,
+  `addInspection` → `inspection_records`). Presentation layer only — no table merge, no
+  duplicated business logic, completion %/health/audit behaviour unchanged.
+- **Combined "Recent Site Updates" feed** with All / Progress / Inspection filters, each row
+  labelled PROGRESS or INSPECTION and linking to its own detail record.
+- **Site update detail view** (`/site-updates/[kind]/[id]`) showing structured evidence:
+  photos, videos, drawing reference and remarks.
+- **Video evidence** on both update types — Record Video (`capture="environment"`) / Choose
+  Video, MIME + size validation, preview, remove, retry, and upload-state feedback.
+  Limits: **150 MB · ~90 s · max 3 clips**, enforced client- and server-side.
+- **Per-attachment notes** — every photo and video can carry its own caption.
+- **Drawing reference** on a site update ("relates to A-203 Rev 2"), pointing at a specific
+  revision so it stays accurate after later revisions supersede it.
+- **Plans & Drawings** project tab — structured register with title, drawing number, category
+  (7 fixed types), revision, issue date, description, status. Current revisions shown
+  prominently; superseded ones retained and clearly marked "do not build from".
+- Quick access to plans from `/site-updates` once a project is selected.
+
+### Changed
+- Mobile bottom navigation: the "Site" tab now opens **Site Updates**, replacing the separate
+  Site Progress and Inspections tabs. Both remain in the More menu, the desktop sidebar, the
+  project tabs and reporting — **all existing URLs still work**.
+
+### Architecture
+- **Video and drawing files upload directly browser→Supabase Storage**, never through a server
+  action: Vercel caps serverless request bodies at ~4.5 MB, so the previous 20 MB/25 MB limits
+  were unreachable in production. The browser uses its authenticated session (the existing
+  bucket RLS policy authorises it — no service-role key, no new endpoint); only the storage
+  path plus metadata reaches the server action, which re-validates it and writes
+  `project_documents` rows. Audit, linkage and RLS are unchanged.
+
+### Database
+- Migration `0007`: `site_progress_logs.area`, `.drawing_id`;
+  `inspection_records.corrective_action/responsible_party/follow_up_date/drawing_id`;
+  `project_documents.media_type/mime_type/file_size/storage_path/thumbnail_url/caption`;
+  new `project_drawings` table with a revision chain (`supersedes_id`), a unique partial index
+  enforcing **one current revision per project + drawing number**, and role-gated RLS —
+  read for anyone with project access, insert Director + QS, update/delete Director only.
+  Additive only; no data loss.
+
 ## [1.3.9] — 2026-07-14 — Manual CI trigger
 Branch `feature/ci-hardening`
 ### Added
