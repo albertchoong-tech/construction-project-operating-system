@@ -29,7 +29,31 @@ _Full sprint specifications (objectives, testing checklists, definitions of done
 | 10 | Record Editing & Corrections | 2026-07-12 | `0cd957b` | Edit forms for draft records; PO cost-centre recategorise; cancel approved PO/VO/claim (audited, retained) |
 | 11 | Reporting & Exports | 2026-07-12 | `3b5fbac` | Reports hub, monthly + project cost reports, CSV exports, payment certificate |
 | 11.5 | Release Engineering & DevOps | 2026-07-12 | `738a5b4` | Git-flow, SemVer + tags, CI (typecheck/lint/build), backup & go-live docs |
-| 11.6 | **Unified Site Updates, Video Evidence & Plans/Drawings** | **2026-07-14** | `v1.4.0` | See below — latest sprint |
+| 11.6 | Unified Site Updates, Video Evidence & Plans/Drawings | 2026-07-14 | `v1.4.0` | `/site-updates` hub, video evidence, captions, Plans & Drawings register |
+| 11.7 | **Site Updates follow-ups** | **2026-07-22** | `v1.5.0` | See below — latest sprint |
+
+### Sprint 11.7 — Site Updates follow-ups (latest)
+
+Closes the gaps left by 11.6. Migration `0008_storage_scoping.sql`.
+
+- ✅ **New fields are editable.** Progress edit gains area + drawing reference; inspection edit
+  gains corrective action, responsible party, follow-up date + drawing reference. Form fields and
+  update actions were changed together so a save can't null an omitted column; the drawing picker
+  includes superseded revisions so an existing reference is never silently cleared.
+- ✅ **Storage membership scoping** — uploads/deletes in `project-documents` are now restricted to
+  projects the user can read (was: any authenticated user could touch any object). Uses the
+  `<project_id>/…` path convention via a `storage_project_id()` helper that returns null on
+  malformed paths, with a Director fallback for legacy objects.
+- ✅ **Write-path E2E** for the revision flow — `@write` tagged, excluded from CI and normal runs
+  (`grepInvert`), self-cleaning **via the API** rather than the UI. Verified the chain in the
+  database: Rev A → `superseded`, Rev B → `current` with `supersedes_id` pointing at A, exactly
+  one `current` per drawing number.
+- ✅ 27/27 read-only E2E green (no regression) + the write test; typecheck, lint (0 warnings) and
+  build all pass.
+
+**Still open:** bucket **read** access remains public — a file URL is viewable by anyone holding
+it. Fixing that needs a private bucket + signed URLs + rewriting every stored `file_url`, so it
+is tracked as its own decision rather than folded in here.
 
 ### Sprint 11.6 — Unified Site Updates, Video Evidence & Plans/Drawings (latest)
 

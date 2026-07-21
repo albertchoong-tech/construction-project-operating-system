@@ -117,6 +117,8 @@ export async function updateProgressLog(
     .update({
       log_date: (formData.get("log_date") as string) || today(),
       reported_by: ((formData.get("reported_by") as string) || "").trim() || null,
+      area: ((formData.get("area") as string) || "").trim() || null,
+      drawing_id: ((formData.get("drawing_id") as string) || "").trim() || null,
       work_done,
       completion_pct,
       weather: ((formData.get("weather") as string) || "").trim() || null,
@@ -243,9 +245,13 @@ export async function updateInspection(
       inspection_date: (formData.get("inspection_date") as string) || today(),
       inspector: ((formData.get("inspector") as string) || "").trim() || null,
       area: ((formData.get("area") as string) || "").trim() || null,
+      drawing_id: ((formData.get("drawing_id") as string) || "").trim() || null,
       result,
       issue_category,
       issue_detail: issue_category === "Others" ? issue_detail : null,
+      corrective_action: ((formData.get("corrective_action") as string) || "").trim() || null,
+      responsible_party: ((formData.get("responsible_party") as string) || "").trim() || null,
+      follow_up_date: ((formData.get("follow_up_date") as string) || "").trim() || null,
       remarks: ((formData.get("remarks") as string) || "").trim() || null,
     })
     .eq("id", id)

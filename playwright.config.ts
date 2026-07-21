@@ -34,6 +34,9 @@ export default defineConfig({
     {
       name: "smoke",
       testIgnore: /auth\.setup\.ts/,
+      // @write tests mutate data, so they never run in CI or a normal local run.
+      // Run them deliberately:  E2E_WRITE=1 npx playwright test --grep @write
+      grepInvert: process.env.E2E_WRITE ? undefined : /@write/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
