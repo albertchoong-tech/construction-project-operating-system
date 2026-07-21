@@ -76,6 +76,18 @@ the server action, which re-validates it (project prefix, MIME, size) before wri
 > transaction**, so one error rolls back the entire file — and running against the wrong project
 > looks identical to "nothing happened". Migration `0007` was lost this way once.
 
+### Write-path tests (since v1.5.0)
+Tests that mutate data are tagged **`@write`** and excluded from CI and normal local runs by
+`grepInvert` in `playwright.config.ts`. Run them deliberately:
+
+```bash
+E2E_WRITE=1 npx playwright test --grep @write
+```
+
+They must create only their own records and **clean up via the API, not the UI** — a UI failure
+must never strand test data. Until an isolated test database exists (§2), they run against the
+shared database, so keep them few and self-contained.
+
 ### Environment variables (per Vercel project)
 | Variable | Where | Secret? |
 |---|---|---|

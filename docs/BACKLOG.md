@@ -134,23 +134,21 @@ _Production: https://construction-project-operating-syst.vercel.app · Supabase 
 
 ---
 
-### Sprint 11.7 — Site Updates follow-ups (carried from the 11.6 user-feedback sprint)
+### ✅ Sprint 11.7 — Site Updates follow-ups (shipped v1.5.0, 2026-07-22)
 
-**Objective:** close the gaps left by Sprint 11.6 now that the site team is using it daily.
+Delivered: editable new fields, membership-scoped storage (migration 0008), and a `@write`
+tagged write-path E2E for the drawing revision flow. See CHANGELOG for detail.
 
-**Features**
-- Expose the new fields in the **edit** forms (area, corrective action, responsible party,
-  follow-up date, drawing reference) — currently set at creation only.
-- **Write-path E2E** for submit / video upload / drawing revision, once an isolated test
-  database exists (RELEASE.md §2). Today these are manual checks.
-- **Membership-scoped storage paths** so evidence files are not merely login-gated — more
-  material now that video is stored.
-- Optional: **multiple drawing references** per update (junction table); server-side video
-  **poster generation** when the browser can't produce one; **follow-up date reminders**
-  (natural fit with Sprint 12 notifications).
-
-**Dependencies:** isolated test DB for the E2E work; otherwise none.
-**Complexity:** Small–Medium · **Priority:** 🟡 Medium (raise if the field team hits the edit gap)
+**Deferred out of 11.7 — candidates for a future sprint:**
+- 🔴 **Private storage bucket + signed URLs.** Files are still publicly readable by URL. This is
+  the largest remaining security gap and grew more material once video landed. Needs: flip the
+  bucket to private, generate signed URLs at render time, and rewrite every stored `file_url`.
+  Non-trivial and touches every media render path — worth its own sprint.
+- **Isolated test database** so write-path E2E can run in CI (RELEASE.md §2 go-live split).
+- **Progress/inspection write E2E** — still manual, because submitting a progress update mutates
+  `projects.completion_pct` and deleting the log does not restore it.
+- Optional: multiple drawing references per update (junction table); server-side video poster
+  generation; follow-up-date reminders (pairs naturally with Sprint 12 notifications).
 
 ### Sprint 12 — Notifications & Scheduled Automations
 **Objective:** The system chases people instead of the Director chasing the system (AGENTIC_LAYER "later" scope).
