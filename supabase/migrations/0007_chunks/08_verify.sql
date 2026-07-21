@@ -2,22 +2,22 @@
 
 select 'site_progress_logs.area' as item,
        case when exists (select 1 from information_schema.columns
-             where table_name='site_progress_logs' and column_name='area')
+             where table_schema='public' and table_name='site_progress_logs' and column_name='area')
             then 'OK' else 'MISSING (chunk 01)' end as status
 union all
 select 'inspection_records.corrective_action',
        case when exists (select 1 from information_schema.columns
-             where table_name='inspection_records' and column_name='corrective_action')
+             where table_schema='public' and table_name='inspection_records' and column_name='corrective_action')
             then 'OK' else 'MISSING (chunk 02)' end
 union all
 select 'project_documents.media_type',
        case when exists (select 1 from information_schema.columns
-             where table_name='project_documents' and column_name='media_type')
+             where table_schema='public' and table_name='project_documents' and column_name='media_type')
             then 'OK' else 'MISSING (chunk 03)' end
 union all
 select 'project_documents.caption',
        case when exists (select 1 from information_schema.columns
-             where table_name='project_documents' and column_name='caption')
+             where table_schema='public' and table_name='project_documents' and column_name='caption')
             then 'OK' else 'MISSING (chunk 03)' end
 union all
 select 'project_documents backfilled',
@@ -34,7 +34,7 @@ select 'project_drawings policies',
 union all
 select 'drawing_id columns',
        case when exists (select 1 from information_schema.columns
-             where table_name='site_progress_logs' and column_name='drawing_id')
+             where table_schema='public' and table_name='site_progress_logs' and column_name='drawing_id')
         and exists (select 1 from information_schema.columns
-             where table_name='inspection_records' and column_name='drawing_id')
+             where table_schema='public' and table_name='inspection_records' and column_name='drawing_id')
             then 'OK' else 'MISSING (chunk 07)' end;

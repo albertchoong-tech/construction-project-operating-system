@@ -134,6 +134,24 @@ _Production: https://construction-project-operating-syst.vercel.app · Supabase 
 
 ---
 
+### Sprint 11.7 — Site Updates follow-ups (carried from the 11.6 user-feedback sprint)
+
+**Objective:** close the gaps left by Sprint 11.6 now that the site team is using it daily.
+
+**Features**
+- Expose the new fields in the **edit** forms (area, corrective action, responsible party,
+  follow-up date, drawing reference) — currently set at creation only.
+- **Write-path E2E** for submit / video upload / drawing revision, once an isolated test
+  database exists (RELEASE.md §2). Today these are manual checks.
+- **Membership-scoped storage paths** so evidence files are not merely login-gated — more
+  material now that video is stored.
+- Optional: **multiple drawing references** per update (junction table); server-side video
+  **poster generation** when the browser can't produce one; **follow-up date reminders**
+  (natural fit with Sprint 12 notifications).
+
+**Dependencies:** isolated test DB for the E2E work; otherwise none.
+**Complexity:** Small–Medium · **Priority:** 🟡 Medium (raise if the field team hits the edit gap)
+
 ### Sprint 12 — Notifications & Scheduled Automations
 **Objective:** The system chases people instead of the Director chasing the system (AGENTIC_LAYER "later" scope).
 
